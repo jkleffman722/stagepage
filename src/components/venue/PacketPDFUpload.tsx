@@ -73,7 +73,8 @@ export function PacketPDFUpload({ packetId, venueId, userId, existingAttachments
       })
 
       if (!res.ok) {
-        toast.error('Failed to extract fields from PDF')
+        const body = await res.json().catch(() => ({}))
+        toast.error(`Failed to extract fields: ${body.error ?? res.status}`)
         setStep('idle')
         return
       }

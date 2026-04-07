@@ -72,7 +72,8 @@ Include all section keys even if empty. Match field keys exactly.`
 
     return NextResponse.json({ fields: parsed })
   } catch (err) {
-    console.error('PDF parse error:', err)
-    return NextResponse.json({ error: 'Failed to parse PDF' }, { status: 500 })
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('PDF parse error:', message)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
