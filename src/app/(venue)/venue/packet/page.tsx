@@ -94,7 +94,7 @@ export default async function PacketPage() {
           const existing = sectionMap.get(sectionDef.key)
           return (
             <PacketSectionEditor
-              key={sectionDef.key}
+              key={`${sectionDef.key}-${existing?.updated_at ?? 'empty'}`}
               packetId={packet.id}
               sectionDef={sectionDef}
               existingSection={existing ?? null}

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { PACKET_SECTIONS, type SectionKey } from '@/lib/types'
 import { toast } from 'sonner'
-import { Upload, FileText, Check, X, Loader2 } from 'lucide-react'
+import { Upload, FileText, Check, X, Loader2, Trash2 } from 'lucide-react'
 
 interface Props {
   packetId: string
@@ -158,7 +158,7 @@ export function PacketPDFUpload({ packetId, venueId, userId, existingAttachments
         <div className="space-y-2">
           <p className="text-sm font-medium text-zinc-600">Uploaded PDFs</p>
           {existingAttachments.map(att => (
-            <AttachmentRow key={att.id} attachment={att} />
+            <AttachmentRow key={att.id} attachment={att} onDeleted={() => router.refresh()} />
           ))}
         </div>
       )}
@@ -266,10 +266,14 @@ export function PacketPDFUpload({ packetId, venueId, userId, existingAttachments
 
 function AttachmentRow({
   attachment,
+  onDeleted,
 }: {
   attachment: { id: string; file_name: string; storage_path: string }
+  onDeleted: () => void
 }) {
   const [downloading, setDownloading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   async function handleDownload() {
     setDownloading(true)
@@ -286,13 +290,47 @@ function AttachmentRow({
     setDownloading(false)
   }
 
+  async function handleDelete() {
+    setDeleting(true)
+    const supabase = createClient()
+
+    await supabase.storage.from('tech-packets').remove([attachment.storage_path])
+    const { error } = await supabase.from('packet_attachments').delete().eq('id', attachment.id)
+
+    if (error) {
+      toast.error('Failed to remove file')
+      setDeleting(false)
+      return
+    }
+
+    toast.success('File removed')
+    onDeleted()
+  }
+
   return (
     <div className="flex items-center gap-3 rounded-md border border-zinc-200 bg-white px-3 py-2">
       <FileText className="h-4 w-4 text-zinc-400 shrink-0" />
       <span className="text-sm text-zinc-700 flex-1 truncate">{attachment.file_name}</span>
-      <Button size="sm" variant="ghost" onClick={handleDownload} disabled={downloading}>
-        {downloading ? 'Loading...' : 'Download'}
-      </Button>
+      {confirmDelete ? (
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs text-zinc-500">Remove?</span>
+          <Button size="sm" variant="destructive" onClick={handleDelete} disabled={deleting}>
+            {deleting ? 'Removing...' : 'Yes, remove'}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+            Cancel
+          </Button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1 shrink-0">
+          <Button size="sm" variant="ghost" onClick={handleDownload} disabled={downloading}>
+            {downloading ? 'Loading...' : 'Download'}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(true)} className="text-zinc-400 hover:text-red-500">
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
