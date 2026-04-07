@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 import { PacketSectionEditor } from '@/components/venue/PacketSectionEditor'
 import { PacketPublishToggle } from '@/components/venue/PacketPublishToggle'
+import { PacketPDFUpload } from '@/components/venue/PacketPDFUpload'
 import { PACKET_SECTIONS } from '@/lib/types'
 import type { PacketSection } from '@/lib/types'
 
@@ -35,6 +35,12 @@ export default async function PacketPage() {
     .eq('packet_id', packet.id)
     .order('sort_order')
 
+  const { data: attachments } = await supabase
+    .from('packet_attachments')
+    .select('id, file_name, storage_path')
+    .eq('packet_id', packet.id)
+    .order('uploaded_at', { ascending: false })
+
   const sectionMap = new Map<string, PacketSection>(
     (sections ?? []).map(s => [s.section_key, s])
   )
@@ -54,6 +60,33 @@ export default async function PacketPage() {
           </Badge>
           <PacketPublishToggle packetId={packet.id} isPublished={packet.is_published} />
         </div>
+      </div>
+
+      {/* PDF upload */}
+      <div className="space-y-2">
+        <div>
+          <h2 className="text-sm font-semibold">Upload PDF</h2>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Upload your existing tech packet — we'll extract the fields automatically.
+            Artists with access can also download the original file.
+          </p>
+        </div>
+        <PacketPDFUpload
+          packetId={packet.id}
+          venueId={venue.id}
+          userId={user.id}
+          existingAttachments={attachments ?? []}
+        />
+      </div>
+
+      <Separator />
+
+      {/* Manual section editors */}
+      <div className="space-y-2">
+        <h2 className="text-sm font-semibold">Packet Sections</h2>
+        <p className="text-xs text-zinc-400">
+          Review and edit each section. Fields populated from a PDF upload can be adjusted here.
+        </p>
       </div>
 
       <div className="space-y-4">
