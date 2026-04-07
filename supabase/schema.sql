@@ -155,6 +155,22 @@ CREATE POLICY "share_requests_requester" ON share_requests
 CREATE POLICY "share_requests_insert" ON share_requests
   FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
+-- Venues: any authenticated user can read venues
+CREATE POLICY "venues_public_read" ON venues
+  FOR SELECT USING (auth.uid() IS NOT NULL);
+
+-- Technical packets: any authenticated user can read published packets
+CREATE POLICY "packets_public_read" ON technical_packets
+  FOR SELECT USING (is_published = true AND auth.uid() IS NOT NULL);
+
+-- Packet sections: any authenticated user can read sections of published packets
+CREATE POLICY "sections_public_read" ON packet_sections
+  FOR SELECT USING (
+    packet_id IN (
+      SELECT id FROM technical_packets WHERE is_published = true
+    )
+  );
+
 -- ============================================================
 -- Auto-create profile on signup trigger
 -- ============================================================
