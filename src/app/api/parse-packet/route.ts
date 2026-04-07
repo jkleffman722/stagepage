@@ -2,6 +2,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { PACKET_SECTIONS } from '@/lib/types'
 
+export const maxDuration = 60
+
 const client = new Anthropic()
 
 // Build a concise field map to send to Claude
