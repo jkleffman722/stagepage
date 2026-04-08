@@ -1,11 +1,28 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { ArtistNav } from '@/components/artist/ArtistNav'
+import { SidebarLayout } from '@/components/shared/SidebarLayout'
+import {
+  LayoutDashboard,
+  Search,
+  FolderOpen,
+  Calendar,
+  Settings,
+} from 'lucide-react'
+
+const navItems = [
+  { href: '/artist/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/artist/venues', label: 'Find Venues', icon: Search },
+  { href: '/artist/packets', label: 'My Packets', icon: FolderOpen },
+  { href: '/artist/calendar', label: 'Calendar', icon: Calendar },
+]
+
+const bottomNavItems = [
+  { href: '/artist/settings', label: 'Settings', icon: Settings },
+]
 
 export default async function ArtistLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/auth/login')
 
   const { data: profile } = await supabase
@@ -14,15 +31,16 @@ export default async function ArtistLayout({ children }: { children: React.React
     .eq('id', user.id)
     .single()
 
-  // Venue users who accidentally land here get sent to their dashboard
   if (profile?.role === 'venue') redirect('/venue/dashboard')
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50">
-      <ArtistNav artistName={profile?.display_name ?? undefined} />
-      <main className="flex-1 px-6 py-8 max-w-5xl mx-auto w-full">
-        {children}
-      </main>
-    </div>
+    <SidebarLayout
+      navItems={navItems}
+      bottomNavItems={bottomNavItems}
+      userName={profile?.display_name ?? user.email ?? undefined}
+      homeHref="/artist/dashboard"
+    >
+      {children}
+    </SidebarLayout>
   )
 }
