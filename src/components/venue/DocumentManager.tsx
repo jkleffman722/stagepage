@@ -1,0 +1,349 @@
+'use client'
+
+import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { PACKET_SECTIONS, type SectionKey, type FieldSource } from '@/lib/types'
+import { toast } from 'sonner'
+import { Upload, FileText, Download, Trash2, Check, X, Loader2 } from 'lucide-react'
+
+interface Attachment {
+  id: string
+  file_name: string
+  storage_path: string
+  uploaded_at: string
+  fieldCount?: number
+}
+
+interface Props {
+  packetId: string
+  venueId: string
+  userId: string
+  attachments: Attachment[]
+}
+
+type ParsedFields = Record<string, Record<string, string>>
+type Step = 'idle' | 'uploading' | 'parsing' | 'review' | 'saving'
+
+export function DocumentManager({ packetId, venueId, userId, attachments: initialAttachments }: Props) {
+  const router = useRouter()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [step, setStep] = useState<Step>('idle')
+  const [parsedFields, setParsedFields] = useState<ParsedFields | null>(null)
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; path: string; attachmentId: string } | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [attachments, setAttachments] = useState(initialAttachments)
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || file.type !== 'application/pdf') {
+      toast.error('Please select a PDF file')
+      return
+    }
+    if (inputRef.current) inputRef.current.value = ''
+
+    setStep('uploading')
+
+    const supabase = createClient()
+    const path = `${userId}/${packetId}/${Date.now()}_${file.name}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('tech-packets')
+      .upload(path, file)
+
+    if (uploadError) {
+      toast.error(`Upload failed: ${uploadError.message}`)
+      setStep('idle')
+      return
+    }
+
+    const { data: att } = await supabase
+      .from('packet_attachments')
+      .insert({ packet_id: packetId, file_name: file.name, storage_path: path, file_type: 'application/pdf' })
+      .select('id, file_name, storage_path, uploaded_at')
+      .single()
+
+    if (!att) {
+      toast.error('Failed to record upload')
+      setStep('idle')
+      return
+    }
+
+    setUploadedFile({ name: file.name, path, attachmentId: att.id })
+    setAttachments(prev => [{ ...att, fieldCount: 0 }, ...prev])
+    setStep('parsing')
+
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const base64 = (reader.result as string).split(',')[1]
+      const res = await fetch('/api/parse-packet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileBase64: base64, mediaType: 'application/pdf' }),
+      })
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        toast.error(`Failed to extract fields: ${body.error ?? res.status}`)
+        setStep('idle')
+        return
+      }
+
+      const { fields } = await res.json()
+      setParsedFields(fields)
+      setStep('review')
+    }
+    reader.readAsDataURL(file)
+  }
+
+  async function handleApply() {
+    if (!parsedFields || !uploadedFile) return
+    setStep('saving')
+
+    const supabase = createClient()
+    const now = new Date().toISOString()
+
+    for (const [sectionIndex, sectionDef] of PACKET_SECTIONS.entries()) {
+      const sectionData = parsedFields[sectionDef.key]
+      if (!sectionData) continue
+
+      const hasContent = Object.values(sectionData).some(v => v && v.trim() !== '')
+      if (!hasContent) continue
+
+      const fields: Record<string, string | number | boolean | null> = {}
+      const newSources: Record<string, FieldSource> = {}
+
+      sectionDef.fields.forEach(f => {
+        const val = sectionData[f.key]
+        if (!val || val.trim() === '') {
+          fields[f.key] = null
+        } else if (f.type === 'boolean') {
+          fields[f.key] = val.toLowerCase() === 'true' || val.toLowerCase() === 'yes'
+          newSources[f.key] = { type: 'pdf', attachmentId: uploadedFile.attachmentId, fileName: uploadedFile.name }
+        } else if (f.type === 'number') {
+          fields[f.key] = Number(val)
+          newSources[f.key] = { type: 'pdf', attachmentId: uploadedFile.attachmentId, fileName: uploadedFile.name }
+        } else {
+          fields[f.key] = val
+          newSources[f.key] = { type: 'pdf', attachmentId: uploadedFile.attachmentId, fileName: uploadedFile.name }
+        }
+      })
+
+      // Merge with existing sources (don't overwrite fields not in this PDF)
+      const { data: existing } = await supabase
+        .from('packet_sections')
+        .select('field_sources')
+        .eq('packet_id', packetId)
+        .eq('section_key', sectionDef.key)
+        .single()
+
+      const mergedSources = { ...(existing?.field_sources ?? {}), ...newSources }
+
+      await supabase.from('packet_sections').upsert({
+        packet_id: packetId,
+        section_key: sectionDef.key,
+        section_label: sectionDef.label,
+        fields,
+        field_sources: mergedSources,
+        sort_order: sectionIndex,
+        updated_at: now,
+      }, { onConflict: 'packet_id,section_key' })
+    }
+
+    await supabase.from('technical_packets').update({ last_updated_at: now }).eq('id', packetId)
+
+    toast.success('Fields applied — review them in Technical Packet')
+    setStep('idle')
+    setParsedFields(null)
+    setUploadedFile(null)
+    router.refresh()
+  }
+
+  async function handleDelete(att: Attachment) {
+    setDeletingId(att.id)
+    const supabase = createClient()
+    await supabase.storage.from('tech-packets').remove([att.storage_path])
+    const { error } = await supabase.from('packet_attachments').delete().eq('id', att.id)
+    if (error) {
+      toast.error('Failed to remove file')
+    } else {
+      setAttachments(prev => prev.filter(a => a.id !== att.id))
+      toast.success('File removed')
+    }
+    setDeletingId(null)
+    setConfirmDeleteId(null)
+  }
+
+  async function handleDownload(att: Attachment) {
+    const supabase = createClient()
+    const { data, error } = await supabase.storage.from('tech-packets').createSignedUrl(att.storage_path, 60)
+    if (error || !data) {
+      toast.error('Could not generate download link')
+    } else {
+      window.open(data.signedUrl, '_blank')
+    }
+  }
+
+  const filledSections = parsedFields
+    ? PACKET_SECTIONS.filter(s => {
+        const data = parsedFields[s.key]
+        return data && Object.values(data).some(v => v && v.trim() !== '')
+      })
+    : []
+
+  return (
+    <div className="space-y-6">
+      {/* Uploaded PDFs */}
+      {attachments.length > 0 && (
+        <div className="space-y-2">
+          {attachments.map(att => (
+            <div
+              key={att.id}
+              className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3"
+            >
+              <FileText className="h-5 w-5 text-zinc-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-zinc-800 truncate">{att.file_name}</p>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Uploaded {new Date(att.uploaded_at).toLocaleDateString()}
+                </p>
+              </div>
+
+              {confirmDeleteId === att.id ? (
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs text-zinc-500">Remove?</span>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDelete(att)}
+                    disabled={deletingId === att.id}
+                  >
+                    {deletingId === att.id ? 'Removing...' : 'Yes, remove'}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setConfirmDeleteId(null)}>
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button size="sm" variant="ghost" onClick={() => handleDownload(att)}>
+                    <Download className="h-3.5 w-3.5 mr-1" />
+                    Download
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setConfirmDeleteId(att.id)}
+                    className="text-zinc-400 hover:text-red-500"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Upload area */}
+      {step === 'idle' && (
+        <div
+          className="border-2 border-dashed border-zinc-200 rounded-lg p-8 text-center cursor-pointer hover:border-zinc-300 hover:bg-zinc-50 transition-colors"
+          onClick={() => inputRef.current?.click()}
+        >
+          <Upload className="h-8 w-8 text-zinc-400 mx-auto mb-2" />
+          <p className="text-sm font-medium text-zinc-600">Upload tech packet PDF</p>
+          <p className="text-xs text-zinc-400 mt-1">
+            We&apos;ll read it and map the fields to your packet automatically
+          </p>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+        </div>
+      )}
+
+      {/* Progress */}
+      {(step === 'uploading' || step === 'parsing' || step === 'saving') && (
+        <Card>
+          <CardContent className="py-6 flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+            <div>
+              <p className="text-sm font-medium">
+                {step === 'uploading' && 'Uploading PDF...'}
+                {step === 'parsing' && 'Reading and mapping fields...'}
+                {step === 'saving' && 'Applying fields to packet...'}
+              </p>
+              {step === 'parsing' && (
+                <p className="text-xs text-zinc-400 mt-0.5">This usually takes 15–30 seconds</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Review */}
+      {step === 'review' && parsedFields && (
+        <Card className="border-blue-200 bg-blue-50/40">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <CardTitle className="text-base">Fields extracted from {uploadedFile?.name}</CardTitle>
+                <CardDescription className="mt-1">
+                  Found data in {filledSections.length} of {PACKET_SECTIONS.length} sections.
+                  Review below, then apply to your packet.
+                </CardDescription>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <Button size="sm" onClick={handleApply}>
+                  <Check className="h-3.5 w-3.5 mr-1" />
+                  Apply to packet
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => { setParsedFields(null); setStep('idle') }}>
+                  <X className="h-3.5 w-3.5 mr-1" />
+                  Discard
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-3">
+            {PACKET_SECTIONS.map(sectionDef => {
+              const data = parsedFields[sectionDef.key as SectionKey]
+              const filledFields = sectionDef.fields.filter(
+                f => data?.[f.key] && data[f.key].trim() !== ''
+              )
+              if (filledFields.length === 0) return null
+              return (
+                <div key={sectionDef.key} className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+                      {sectionDef.label}
+                    </p>
+                    <Badge variant="outline" className="text-xs text-blue-600 border-blue-200">
+                      {filledFields.length} field{filledFields.length !== 1 ? 's' : ''}
+                    </Badge>
+                  </div>
+                  <div className="bg-white rounded border border-blue-100 divide-y divide-blue-50">
+                    {filledFields.map(f => (
+                      <div key={f.key} className="px-3 py-2 flex gap-4">
+                        <span className="text-xs text-zinc-400 w-36 shrink-0 pt-0.5">{f.label}</span>
+                        <span className="text-xs text-zinc-700 whitespace-pre-line">{data[f.key]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}

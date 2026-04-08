@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
   FileText,
+  FileStack,
   Inbox,
   Calendar,
   Settings,
@@ -16,6 +17,7 @@ import { AppSidebar, type NavItem } from './AppSidebar'
 const VENUE_NAV: NavItem[] = [
   { href: '/venue/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/venue/packet', label: 'Technical Packet', icon: FileText },
+  { href: '/venue/documents', label: 'Documents', icon: FileStack },
   { href: '/venue/requests', label: 'Share Requests', icon: Inbox },
   { href: '/venue/calendar', label: 'Calendar', icon: Calendar },
 ]

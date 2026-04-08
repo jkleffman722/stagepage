@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { PacketSectionEditor } from '@/components/venue/PacketSectionEditor'
 import { PacketPublishToggle } from '@/components/venue/PacketPublishToggle'
-import { PacketPDFUpload } from '@/components/venue/PacketPDFUpload'
+import { Badge } from '@/components/ui/badge'
 import { PACKET_SECTIONS } from '@/lib/types'
 import type { PacketSection } from '@/lib/types'
+import Link from 'next/link'
+import { FileText } from 'lucide-react'
 
 export default async function PacketPage() {
   const supabase = await createClient()
@@ -35,15 +35,22 @@ export default async function PacketPage() {
     .eq('packet_id', packet.id)
     .order('sort_order')
 
-  const { data: attachments } = await supabase
-    .from('packet_attachments')
-    .select('id, file_name, storage_path')
-    .eq('packet_id', packet.id)
-    .order('uploaded_at', { ascending: false })
-
   const sectionMap = new Map<string, PacketSection>(
     (sections ?? []).map(s => [s.section_key, s])
   )
+
+  // Completion stats
+  const totalFields = PACKET_SECTIONS.reduce((acc, s) => acc + s.fields.length, 0)
+  const filledFields = PACKET_SECTIONS.reduce((acc, sectionDef) => {
+    const section = sectionMap.get(sectionDef.key)
+    if (!section) return acc
+    return acc + sectionDef.fields.filter(f => {
+      const val = section.fields?.[f.key]
+      return val !== null && val !== '' && val !== undefined
+    }).length
+  }, 0)
+  const pct = Math.round((filledFields / totalFields) * 100)
+  const isComplete = filledFields === totalFields
 
   return (
     <div className="space-y-6">
@@ -62,33 +69,34 @@ export default async function PacketPage() {
         </div>
       </div>
 
-      {/* PDF upload */}
-      <div className="space-y-2">
-        <div>
-          <h2 className="text-sm font-semibold">Upload PDF</h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Upload your existing tech packet — we'll extract the fields automatically.
-            Artists with access can also download the original file.
+      {/* Completion bar */}
+      <div className="rounded-lg border border-zinc-200 bg-white p-4">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm font-medium text-zinc-700">
+            {isComplete ? 'Packet complete' : `${filledFields} of ${totalFields} fields filled in`}
           </p>
+          <span className={`text-sm font-semibold ${isComplete ? 'text-green-600' : pct >= 50 ? 'text-yellow-600' : 'text-red-500'}`}>
+            {pct}%
+          </span>
         </div>
-        <PacketPDFUpload
-          packetId={packet.id}
-          venueId={venue.id}
-          userId={user.id}
-          existingAttachments={attachments ?? []}
-        />
+        <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${isComplete ? 'bg-green-500' : pct >= 50 ? 'bg-yellow-400' : 'bg-red-400'}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        {!isComplete && (
+          <p className="text-xs text-zinc-400 mt-2">
+            Sections with missing fields are highlighted below. You can also{' '}
+            <Link href="/venue/documents" className="underline underline-offset-2 hover:text-zinc-600">
+              upload a PDF
+            </Link>{' '}
+            to fill them automatically.
+          </p>
+        )}
       </div>
 
-      <Separator />
-
-      {/* Manual section editors */}
-      <div className="space-y-2">
-        <h2 className="text-sm font-semibold">Packet Sections</h2>
-        <p className="text-xs text-zinc-400">
-          Review and edit each section. Fields populated from a PDF upload can be adjusted here.
-        </p>
-      </div>
-
+      {/* Section editors */}
       <div className="space-y-4">
         {PACKET_SECTIONS.map((sectionDef, index) => {
           const existing = sectionMap.get(sectionDef.key)

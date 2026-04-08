@@ -33,12 +33,19 @@ export interface TechnicalPacket {
 
 // Each section has a key, label, and a flexible fields object.
 // Fields are defined per section in PACKET_SECTIONS below.
+export interface FieldSource {
+  type: 'pdf' | 'manual'
+  attachmentId?: string
+  fileName?: string
+}
+
 export interface PacketSection {
   id: string
   packet_id: string
   section_key: SectionKey
   section_label: string
   fields: Record<string, string | number | boolean | null>
+  field_sources: Record<string, FieldSource>
   sort_order: number
   updated_at: string
 }
