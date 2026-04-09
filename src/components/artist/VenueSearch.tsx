@@ -59,10 +59,16 @@ export function VenueSearch({ venues, userId }: { venues: Venue[]; userId: strin
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', userId)
+      .single()
 
     const { error } = await supabase.from('share_requests').insert({
       venue_id: selectedVenue.id,
       requester_profile_id: userId,
+      requester_name: profile?.display_name ?? null,
       requester_email: user?.email ?? '',
       event_date: eventDate || null,
       message: message || null,
