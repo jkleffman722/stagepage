@@ -28,7 +28,6 @@ const VENUE_BOTTOM: NavItem[] = [
 
 const ARTIST_NAV: NavItem[] = [
   { href: '/artist/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/artist/venues', label: 'Find Venues', icon: Search },
   { href: '/artist/packets', label: 'My Packets', icon: FolderOpen },
   { href: '/artist/calendar', label: 'Calendar', icon: Calendar },
 ]

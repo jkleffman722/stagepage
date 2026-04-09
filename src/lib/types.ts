@@ -4,9 +4,40 @@ export interface Profile {
   id: string
   role: UserRole
   display_name: string | null
+  organization: string | null
+  job_role: string | null
   created_at: string
   updated_at: string
 }
+
+export interface Tour {
+  id: string
+  profile_id: string
+  artist_name: string
+  tour_name: string
+  user_role: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface Show {
+  id: string
+  tour_id: string
+  event_date: string
+  venue_id: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export const ARTIST_ROLES = [
+  'Tour Manager',
+  'Production Manager',
+  'Lighting Director',
+  'Sound Engineer',
+  'Stage Manager',
+] as const
 
 export interface Venue {
   id: string

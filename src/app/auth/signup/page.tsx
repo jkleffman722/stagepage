@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ARTIST_ROLES } from '@/lib/types'
 import { toast } from 'sonner'
 
 export default function SignupPage() {
@@ -24,7 +26,8 @@ function SignupForm() {
   const isVenue = role === 'venue'
 
   const [displayName, setDisplayName] = useState('')
-  const [orgName, setOrgName] = useState('') // venue name OR artist/band/tour name
+  const [orgName, setOrgName] = useState('')       // venue name (venue) or company/org (artist)
+  const [jobRole, setJobRole] = useState('')         // artist only
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -58,7 +61,14 @@ function SignupForm() {
       }
       router.push('/venue/dashboard')
     } else {
-      router.push('/artist/dashboard')
+      // Save organization and job role to profile
+      await supabase.from('profiles').update({
+        organization: orgName || null,
+        job_role: jobRole || null,
+        updated_at: new Date().toISOString(),
+      }).eq('id', data.user.id)
+
+      router.push('/artist/tours/new')
     }
 
     router.refresh()
@@ -72,10 +82,10 @@ function SignupForm() {
           <blockquote className="text-zinc-300 text-lg leading-relaxed">
             {isVenue
               ? '"Finally, one place to keep our tech packet up to date instead of emailing PDFs every tour."'
-              : '"All the venue info I need, always current. No more chasing down outdated riders."'}
+              : '"All the venue info I need, always current — and my whole tour in one place."'}
           </blockquote>
           <p className="mt-4 text-zinc-500 text-sm">
-            {isVenue ? 'Venue Production Manager' : 'Tour Production Coordinator'}
+            {isVenue ? 'Venue Production Manager' : 'Tour Production Manager'}
           </p>
         </div>
         <p className="text-zinc-600 text-sm">© {new Date().getFullYear()} StagePage</p>
@@ -88,7 +98,7 @@ function SignupForm() {
           <div className="mb-8">
             <h1 className="text-white text-2xl font-bold tracking-tight">Create your account</h1>
             <p className="mt-2 text-zinc-400 text-sm">
-              {isVenue ? "Set up your venue's technical packet" : 'Access venue tech packets for your shows'}
+              {isVenue ? "Set up your venue's technical packet" : 'Advance your shows. One platform.'}
             </p>
           </div>
 
@@ -108,18 +118,34 @@ function SignupForm() {
 
             <div className="space-y-2">
               <Label htmlFor="org" className="text-zinc-300">
-                {isVenue ? 'Venue name' : 'Artist / band / tour name'}
+                {isVenue ? 'Venue name' : 'Organization / Company'}
               </Label>
               <Input
                 id="org"
                 type="text"
-                placeholder={isVenue ? 'The Fillmore' : 'Taylor Swift | The Eras Tour'}
+                placeholder={isVenue ? 'The Fillmore' : 'Live Nation, independent, etc.'}
                 value={orgName}
                 onChange={e => setOrgName(e.target.value)}
-                required
+                required={isVenue}
                 className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 h-10"
               />
             </div>
+
+            {!isVenue && (
+              <div className="space-y-2">
+                <Label htmlFor="jobRole" className="text-zinc-300">Your role</Label>
+                <Select value={jobRole} onValueChange={v => setJobRole(v ?? '')}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white h-10">
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ARTIST_ROLES.map(r => (
+                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="email" className="text-zinc-300">Email</Label>
