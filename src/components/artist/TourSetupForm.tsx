@@ -50,36 +50,34 @@ export function TourSetupForm({ userId, defaultRole = '' }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-2">
-        <Label htmlFor="artistName" className="text-zinc-300">Artist / Band name</Label>
+        <Label htmlFor="artistName">Artist / Band name</Label>
         <Input
           id="artistName"
           placeholder="e.g. Tame Impala"
           value={artistName}
           onChange={e => setArtistName(e.target.value)}
           required
-          className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 h-10"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="tourName" className="text-zinc-300">Tour name</Label>
+        <Label htmlFor="tourName">Tour name</Label>
         <Input
           id="tourName"
           placeholder="e.g. The Slow Rush World Tour 2026"
           value={tourName}
           onChange={e => setTourName(e.target.value)}
           required
-          className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 h-10"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="userRole" className="text-zinc-300">
-          Your role on this tour
-          <span className="text-zinc-500 ml-1 font-normal">(optional)</span>
+        <Label htmlFor="userRole">
+          Your role on this tour{' '}
+          <span className="text-zinc-400 font-normal text-xs">(optional)</span>
         </Label>
         <Select value={userRole} onValueChange={v => setUserRole(v ?? '')}>
-          <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white h-10">
+          <SelectTrigger>
             <SelectValue placeholder="Select your role" />
           </SelectTrigger>
           <SelectContent>
@@ -90,7 +88,7 @@ export function TourSetupForm({ userId, defaultRole = '' }: Props) {
         </Select>
       </div>
 
-      <Button type="submit" className="w-full h-10 mt-2" disabled={loading || !artistName || !tourName}>
+      <Button type="submit" className="w-full mt-2" disabled={loading || !artistName || !tourName}>
         {loading ? 'Creating tour...' : (
           <>
             Continue to dashboard

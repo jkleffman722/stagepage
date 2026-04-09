@@ -14,19 +14,14 @@ export default async function NewTourPage() {
     .single()
 
   return (
-    <div className="flex min-h-screen bg-zinc-950 items-center justify-center px-6 py-12">
-      <div className="w-full max-w-md">
-        <div className="mb-2">
-          <span className="text-white text-xl font-semibold tracking-tight">StagePage</span>
-        </div>
-        <div className="mt-10 mb-8">
-          <h1 className="text-white text-2xl font-bold tracking-tight">
-            Set up your first tour
-          </h1>
-          <p className="mt-2 text-zinc-400 text-sm">
-            You&apos;ll be able to add shows, find venues, and request tech packets — all in one place.
-          </p>
-        </div>
+    <div className="max-w-md">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight">Set up a tour</h1>
+        <p className="mt-1.5 text-zinc-500 text-sm">
+          Add shows, find venues, and request tech packets — all in one place.
+        </p>
+      </div>
+      <div className="rounded-xl border border-zinc-200 bg-white p-6">
         <TourSetupForm
           userId={user.id}
           defaultRole={profile?.job_role ?? ''}
