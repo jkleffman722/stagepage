@@ -34,7 +34,7 @@ export default function LoginPage() {
       .eq('id', data.user.id)
       .single()
 
-    router.push(profile?.role === 'artist' ? '/artist/dashboard' : '/venue/dashboard')
+    router.push(profile?.role === 'artist' ? '/artist/tours' : '/venue/dashboard')
     router.refresh()
   }
 

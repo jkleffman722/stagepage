@@ -11,6 +11,7 @@ import {
   Settings,
   Search,
   FolderOpen,
+  Ticket,
 } from 'lucide-react'
 import { AppSidebar, type NavItem } from './AppSidebar'
 
@@ -27,7 +28,7 @@ const VENUE_BOTTOM: NavItem[] = [
 ]
 
 const ARTIST_NAV: NavItem[] = [
-  { href: '/artist/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/artist/tours', label: 'Tours', icon: Ticket },
   { href: '/artist/packets', label: 'My Packets', icon: FolderOpen },
   { href: '/artist/calendar', label: 'Calendar', icon: Calendar },
 ]
@@ -61,7 +62,7 @@ export function SidebarLayout({ role, userName, entityName, children }: Props) {
 
   const navItems = role === 'venue' ? VENUE_NAV : ARTIST_NAV
   const bottomNavItems = role === 'venue' ? VENUE_BOTTOM : ARTIST_BOTTOM
-  const homeHref = role === 'venue' ? '/venue/dashboard' : '/artist/dashboard'
+  const homeHref = role === 'venue' ? '/venue/dashboard' : '/artist/tours'
 
   return (
     <div className="flex min-h-screen bg-zinc-50">

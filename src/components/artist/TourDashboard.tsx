@@ -6,6 +6,7 @@ import { ShowCard } from './ShowCard'
 import { AddShowModal } from './AddShowModal'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import type { Tour } from '@/lib/types'
 
 interface ShowWithDetails {
@@ -37,19 +38,23 @@ export function TourDashboard({ tour, shows, userName }: Props) {
 
   return (
     <div className="space-y-8">
-      {/* Tour header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{tour.tour_name}</h1>
-          <p className="text-zinc-500 mt-0.5">{tour.artist_name}</p>
-          {tour.user_role && (
-            <p className="text-xs text-zinc-400 mt-1">{tour.user_role}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/artist/tours/new">
-            <Button variant="outline" size="sm">New Tour</Button>
-          </Link>
+      {/* Back + Tour header */}
+      <div>
+        <Link
+          href="/artist/tours"
+          className="inline-flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-600 mb-4 transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          All tours
+        </Link>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{tour.tour_name}</h1>
+            <p className="text-zinc-500 mt-0.5">{tour.artist_name}</p>
+            {tour.user_role && (
+              <p className="text-xs text-zinc-400 mt-1">{tour.user_role}</p>
+            )}
+          </div>
           <Button onClick={() => setAddOpen(true)}>
             <Plus className="h-4 w-4 mr-1.5" />
             Add Show

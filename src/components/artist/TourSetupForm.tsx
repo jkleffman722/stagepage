@@ -43,7 +43,7 @@ export function TourSetupForm({ userId, defaultRole = '' }: Props) {
       return
     }
 
-    router.push('/artist/dashboard')
+    router.push('/artist/tours')
     router.refresh()
   }
 
