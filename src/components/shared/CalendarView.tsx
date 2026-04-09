@@ -158,15 +158,23 @@ export function CalendarView({ events }: Props) {
                   {day}
                 </span>
                 {dayEvents.length > 0 && (
-                  <div className="flex flex-wrap gap-0.5 mt-1">
-                    {dayEvents.slice(0, 3).map(e => (
+                  <div className="flex flex-col gap-0.5 mt-0.5">
+                    {dayEvents.slice(0, 2).map(e => (
                       <span
                         key={e.id}
-                        className={cn('h-1.5 w-1.5 rounded-full', DOT_COLORS[e.color ?? 'blue'])}
-                      />
+                        className={cn(
+                          'text-[10px] font-medium rounded px-1 py-0.5 truncate leading-tight',
+                          e.color === 'green' ? 'bg-green-100 text-green-700' :
+                          e.color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                          e.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-zinc-100 text-zinc-500'
+                        )}
+                      >
+                        {e.title}
+                      </span>
                     ))}
-                    {dayEvents.length > 3 && (
-                      <span className="text-[10px] text-zinc-400">+{dayEvents.length - 3}</span>
+                    {dayEvents.length > 2 && (
+                      <span className="text-[10px] text-zinc-400 pl-0.5">+{dayEvents.length - 2} more</span>
                     )}
                   </div>
                 )}
