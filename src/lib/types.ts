@@ -137,6 +137,166 @@ export interface SectionDefinition {
   fields: FieldDefinition[]
 }
 
+// ============================================================
+// Tech Rider — tour-side document, one per tour
+// Captures what the touring production carries and requires.
+// Fields map directly to advance sheet auto-population.
+// ============================================================
+
+export interface TechRider {
+  id: string
+  tour_id: string
+  created_at: string
+  updated_at: string
+}
+
+export interface TechRiderSection {
+  id: string
+  rider_id: string
+  section_key: RiderSectionKey
+  section_label: string
+  fields: Record<string, string | number | boolean | null>
+  sort_order: number
+  updated_at: string
+}
+
+export type RiderSectionKey =
+  | 'tour_info'
+  | 'audio'
+  | 'lighting'
+  | 'video'
+  | 'power'
+  | 'stage_requirements'
+  | 'labor_defaults'
+  | 'hospitality'
+  | 'production_notes'
+
+export interface RiderSectionDefinition {
+  key: RiderSectionKey
+  label: string
+  fields: FieldDefinition[]
+}
+
+export const TECH_RIDER_SECTIONS: RiderSectionDefinition[] = [
+  {
+    key: 'tour_info',
+    label: 'Tour Contacts & Logistics',
+    fields: [
+      { key: 'tour_manager', label: 'Tour Manager', type: 'text', placeholder: 'Name · phone · email' },
+      { key: 'production_manager', label: 'Production Manager', type: 'text', placeholder: 'Name · phone · email' },
+      { key: 'production_assistant', label: 'Production Assistant', type: 'text', placeholder: 'Name · phone · email' },
+      { key: 'merch', label: 'Tour Merch', type: 'text', placeholder: 'Name · phone · email' },
+      { key: 'lead_driver', label: 'Lead Driver', type: 'text', placeholder: 'Name · phone' },
+      { key: 'bus_count', label: 'Number of Buses', type: 'text', placeholder: 'e.g. 3 Buses' },
+      { key: 'truck_count', label: 'Number of Trucks', type: 'text', placeholder: 'e.g. 4 Semi / 1 Box' },
+    ],
+  },
+  {
+    key: 'audio',
+    label: 'Audio System',
+    fields: [
+      { key: 'main_hang', label: 'Main Hang (tour carries)', type: 'text', placeholder: 'e.g. Cohesion CO10' },
+      { key: 'sub', label: 'Sub (tour carries)', type: 'text', placeholder: 'e.g. Cohesion CP218' },
+      { key: 'side_front_fills', label: 'Side / Front Fills', type: 'text', placeholder: 'e.g. Cohesion CP6' },
+      { key: 'foh_console', label: 'FOH Console (tour carries)', type: 'text', placeholder: 'e.g. DiGiCo SD12' },
+      { key: 'monitor_console', label: 'Monitor Console (tour carries)', type: 'text', placeholder: 'e.g. DiGiCo SD9' },
+      { key: 'venue_audio_requirements', label: 'Venue Must Provide', type: 'textarea', placeholder: 'What the venue needs to provide or prepare (tie-in connection, console removal, etc.)' },
+      { key: 'house_consoles_removed', label: 'House Consoles Must Be Removed?', type: 'boolean' },
+      { key: 'audio_notes', label: 'Notes', type: 'textarea' },
+    ],
+  },
+  {
+    key: 'lighting',
+    label: 'Lighting Requirements',
+    fields: [
+      { key: 'house_rig_struck', label: 'House Rig Must Be Struck?', type: 'boolean' },
+      { key: 'haze_allowed', label: 'Haze / Atmosphere Allowed?', type: 'boolean' },
+      { key: 'haze_notes', label: 'Haze Notes', type: 'text', placeholder: 'e.g. Fire watch required — $105/hr; must notify venue 2 weeks out' },
+      { key: 'co2_request', label: 'CO₂ Request', type: 'text', placeholder: 'e.g. 6 tanks 20lb non-syphon' },
+      { key: 'tour_ld', label: 'Tour LD', type: 'text', placeholder: 'Name' },
+      { key: 'lighting_notes', label: 'Notes', type: 'textarea' },
+    ],
+  },
+  {
+    key: 'video',
+    label: 'Video & Streaming',
+    fields: [
+      { key: 'streaming_platform', label: 'Streaming Platform', type: 'text', placeholder: 'e.g. Nugs' },
+      { key: 'internet_requirement', label: 'Internet Requirement', type: 'text', placeholder: 'e.g. 1 Gbps up, dedicated line' },
+      { key: 'imag_requirements', label: 'IMAG Requirements', type: 'textarea', placeholder: 'What the venue IMAG system needs to support (tie-in location, signal format, etc.)' },
+      { key: 'video_notes', label: 'Notes', type: 'textarea' },
+    ],
+  },
+  {
+    key: 'power',
+    label: 'Power Requirements',
+    fields: [
+      { key: 'lx_rigging_power', label: 'Rigging / LX Power Needed', type: 'text', placeholder: 'e.g. (3) 400A + (1) 200A 3-phase' },
+      { key: 'lx_rigging_location', label: 'Rigging / LX Power Location', type: 'text', placeholder: 'e.g. USR' },
+      { key: 'audio_power', label: 'Audio Power Needed', type: 'text', placeholder: 'e.g. (2) 200A 3-phase' },
+      { key: 'audio_location', label: 'Audio Power Location', type: 'text', placeholder: 'e.g. USL / USR' },
+      { key: 'video_power', label: 'Video Power Needed', type: 'text', placeholder: 'e.g. (1) 100A 3-phase' },
+      { key: 'video_location', label: 'Video Power Location', type: 'text', placeholder: 'e.g. Audio distro' },
+      { key: 'extra_feeder', label: 'Extra Feeder Requirements', type: 'textarea', placeholder: 'Any additional power needs' },
+      { key: 'power_notes', label: 'Notes', type: 'textarea', placeholder: 'e.g. All 3-phase 240V within 100′ of location. Cable runs in public areas to be matted.' },
+    ],
+  },
+  {
+    key: 'stage_requirements',
+    label: 'Stage & Production Requirements',
+    fields: [
+      { key: 'risers_needed', label: 'Risers Needed', type: 'textarea', placeholder: 'e.g. (1) 8′×8′ @ 16″' },
+      { key: 'barricade_distance', label: 'Barricade: Distance from DSE', type: 'text', placeholder: "e.g. 8′ from downstage edge" },
+      { key: 'barricade_type', label: 'Barricade Type Preferred', type: 'text', placeholder: 'e.g. Mojo or equivalent' },
+      { key: 'production_in_pit', label: 'Production in Pit', type: 'text', placeholder: 'e.g. Cam op with shoulder camera' },
+      { key: 'upstage_black', label: 'Upstage Black / Legs Required?', type: 'boolean' },
+      { key: 'dead_storage_needs', label: 'Dead Storage Needs', type: 'textarea', placeholder: 'Required staging area for empty cases' },
+      { key: 'stage_notes', label: 'Notes', type: 'textarea' },
+    ],
+  },
+  {
+    key: 'labor_defaults',
+    label: 'Labor Defaults',
+    fields: [
+      { key: 'crew_chief', label: 'Crew Chief (Load In · Show · Load Out)', type: 'text', placeholder: 'e.g. 1 · 1 · 1' },
+      { key: 'electrician', label: 'Electrician (Load In · Show · Load Out)', type: 'text', placeholder: 'e.g. 1 · 1 · 1' },
+      { key: 'head_rigger', label: 'Head Rigger (Load In · Show · Load Out)', type: 'text', placeholder: 'e.g. 1 · 1 · 1' },
+      { key: 'up_riggers', label: 'Up Riggers (Load In count)', type: 'number', placeholder: 'e.g. 8' },
+      { key: 'down_riggers', label: 'Down Riggers (Load Out count)', type: 'number', placeholder: 'e.g. 4' },
+      { key: 'loaders', label: 'Loaders', type: 'number', placeholder: 'e.g. 4' },
+      { key: 'forklift', label: 'Forklift', type: 'number', placeholder: 'e.g. 1' },
+      { key: 'first_call_total', label: '1st Call — Total', type: 'number', placeholder: 'e.g. 14' },
+      { key: 'first_call_breakdown', label: '1st Call — Dept Breakdown', type: 'text', placeholder: 'e.g. 8 LX · 6 Audio' },
+      { key: 'second_call_breakdown', label: '2nd Call — Dept Breakdown', type: 'text', placeholder: 'e.g. 4 Audio · 2 Backline · 2 Video' },
+      { key: 'load_out_total', label: 'Load Out — Total', type: 'number', placeholder: 'e.g. 22' },
+      { key: 'load_out_breakdown', label: 'Load Out — Dept Breakdown', type: 'text', placeholder: 'e.g. 8 LX · 6 Audio · 4 Backline · 4 Video' },
+      { key: 'labor_min_call', label: 'Labor Min Call', type: 'text', placeholder: 'e.g. 4hr min, 1.5× after midnight' },
+      { key: 'feeding_rules', label: 'Feeding Rules', type: 'text', placeholder: 'e.g. Feed after 5 hours worked' },
+      { key: 'labor_notes', label: 'Notes', type: 'textarea' },
+    ],
+  },
+  {
+    key: 'hospitality',
+    label: 'Hospitality Requirements',
+    fields: [
+      { key: 'bath_towels', label: 'Bath Towels Needed', type: 'number', placeholder: 'e.g. 50' },
+      { key: 'stage_towels', label: 'Stage Towels Needed', type: 'number', placeholder: 'e.g. 10' },
+      { key: 'tabling_needs', label: 'Tabling Needs', type: 'text', placeholder: "e.g. (3) 6′ tables with (2) chairs each in lobby" },
+      { key: 'aftershow_cash', label: 'After-Show Food Cash', type: 'text', placeholder: 'e.g. $400' },
+      { key: 'catering_rider', label: 'Catering Rider Link / Notes', type: 'textarea', placeholder: 'Link to catering rider document or key requirements' },
+      { key: 'hospitality_notes', label: 'Notes', type: 'textarea' },
+    ],
+  },
+  {
+    key: 'production_notes',
+    label: 'General Production Notes',
+    fields: [
+      { key: 'notes', label: 'Notes', type: 'textarea', placeholder: 'General requirements, standards, or anything else the venue needs to know before advancing this show.' },
+      { key: 'standard_note', label: 'Standard Advance Note', type: 'textarea', placeholder: 'e.g. With this document should be the tour stage plot, rigging plot and general rider. If you have not received this, please reach out to Production Manager.' },
+    ],
+  },
+]
+
 export const PACKET_SECTIONS: SectionDefinition[] = [
   {
     key: 'contacts',

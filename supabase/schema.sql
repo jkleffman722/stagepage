@@ -76,6 +76,27 @@ CREATE TABLE IF NOT EXISTS share_requests (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Tech Riders: one per tour (artist-side, mirrors technical_packets for venues)
+CREATE TABLE IF NOT EXISTS tech_riders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tour_id UUID REFERENCES tours(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(tour_id)
+);
+
+-- Tech Rider Sections: flexible key/value sections per rider
+CREATE TABLE IF NOT EXISTS tech_rider_sections (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  rider_id UUID REFERENCES tech_riders(id) ON DELETE CASCADE,
+  section_key TEXT NOT NULL,
+  section_label TEXT NOT NULL,
+  fields JSONB NOT NULL DEFAULT '{}',
+  sort_order INTEGER DEFAULT 0,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(rider_id, section_key)
+);
+
 -- ============================================================
 -- Indexes
 -- ============================================================
@@ -85,6 +106,8 @@ CREATE INDEX IF NOT EXISTS idx_packet_sections_packet_id ON packet_sections(pack
 CREATE INDEX IF NOT EXISTS idx_share_requests_venue_id ON share_requests(venue_id);
 CREATE INDEX IF NOT EXISTS idx_share_requests_status ON share_requests(status);
 CREATE INDEX IF NOT EXISTS idx_share_requests_access_token ON share_requests(access_token);
+CREATE INDEX IF NOT EXISTS idx_tech_riders_tour_id ON tech_riders(tour_id);
+CREATE INDEX IF NOT EXISTS idx_tech_rider_sections_rider_id ON tech_rider_sections(rider_id);
 
 -- ============================================================
 -- Row Level Security
@@ -95,6 +118,8 @@ ALTER TABLE technical_packets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE packet_sections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE packet_attachments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE share_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tech_riders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tech_rider_sections ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: users can read/update their own profile
 CREATE POLICY "profiles_own" ON profiles
@@ -154,6 +179,22 @@ CREATE POLICY "share_requests_requester" ON share_requests
 -- Share requests: any authenticated user can create a request
 CREATE POLICY "share_requests_insert" ON share_requests
   FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+
+-- Tech riders: tour owner can do everything
+CREATE POLICY "tech_riders_owner" ON tech_riders
+  FOR ALL USING (
+    tour_id IN (SELECT id FROM tours WHERE profile_id = auth.uid())
+  );
+
+-- Tech rider sections: tour owner can do everything
+CREATE POLICY "tech_rider_sections_owner" ON tech_rider_sections
+  FOR ALL USING (
+    rider_id IN (
+      SELECT tr.id FROM tech_riders tr
+      JOIN tours t ON t.id = tr.tour_id
+      WHERE t.profile_id = auth.uid()
+    )
+  );
 
 -- Venues: any authenticated user can read venues
 CREATE POLICY "venues_public_read" ON venues
