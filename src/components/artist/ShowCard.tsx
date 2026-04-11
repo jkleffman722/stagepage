@@ -118,9 +118,14 @@ export function ShowCard({ show }: Props) {
               Find &amp; Request Venue
             </Button>
           )}
+          {hasVenue && status !== 'approved' && (
+            <Link href={`/artist/tours/${show.tour_id}/shows/${show.id}`}>
+              <Button size="sm" variant="outline">View Show</Button>
+            </Link>
+          )}
           {status === 'approved' && show.venues && (
-            <Link href={`/artist/packets/${show.venues.id}`}>
-              <Button size="sm">View Packet</Button>
+            <Link href={`/artist/tours/${show.tour_id}/shows/${show.id}`}>
+              <Button size="sm">Advance Check</Button>
             </Link>
           )}
 
