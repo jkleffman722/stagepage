@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { AdvanceCheck } from '@/components/artist/AdvanceCheck'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, MapPin } from 'lucide-react'
+import { ArrowLeft, Calendar, ClipboardCheck, MapPin } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import type { TechRiderSection, PacketSection } from '@/lib/types'
 
 interface Props {
@@ -133,15 +134,25 @@ export default async function ShowDetailPage({ params }: Props) {
             )}
           </div>
 
-          {statusConfig ? (
-            <Badge variant="outline" className={`text-xs shrink-0 ${statusConfig.className}`}>
-              {statusConfig.label}
-            </Badge>
-          ) : venue ? (
-            <Badge variant="outline" className="text-xs text-zinc-400 shrink-0">
-              No packet yet
-            </Badge>
-          ) : null}
+          <div className="flex items-center gap-2 shrink-0">
+            {status === 'approved' && (
+              <Link href={`/artist/tours/${tourId}/shows/${showId}/advance`}>
+                <Button size="sm" className="gap-1.5">
+                  <ClipboardCheck className="h-3.5 w-3.5" />
+                  Advance Sheet
+                </Button>
+              </Link>
+            )}
+            {statusConfig ? (
+              <Badge variant="outline" className={`text-xs ${statusConfig.className}`}>
+                {statusConfig.label}
+              </Badge>
+            ) : venue ? (
+              <Badge variant="outline" className="text-xs text-zinc-400">
+                No packet yet
+              </Badge>
+            ) : null}
+          </div>
         </div>
       </div>
 

@@ -165,6 +165,14 @@ export interface TechRiderSection {
 // Input List
 // ============================================================
 
+export interface ShowAdvance {
+  id: string
+  show_id: string
+  fields: Record<string, string | null>
+  created_at: string
+  updated_at: string
+}
+
 export const INPUT_TYPES = [
   'Dynamic mic',
   'Condenser mic',

@@ -124,9 +124,14 @@ export function ShowCard({ show }: Props) {
             </Link>
           )}
           {status === 'approved' && show.venues && (
-            <Link href={`/artist/tours/${show.tour_id}/shows/${show.id}`}>
-              <Button size="sm">Advance Check</Button>
-            </Link>
+            <>
+              <Link href={`/artist/tours/${show.tour_id}/shows/${show.id}`}>
+                <Button size="sm" variant="outline">Advance Check</Button>
+              </Link>
+              <Link href={`/artist/tours/${show.tour_id}/shows/${show.id}/advance`}>
+                <Button size="sm">Advance Sheet</Button>
+              </Link>
+            </>
           )}
 
           {/* Secondary actions */}
