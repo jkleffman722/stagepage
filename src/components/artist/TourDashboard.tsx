@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ShowCard } from './ShowCard'
 import { AddShowModal } from './AddShowModal'
-import { Plus, FileText } from 'lucide-react'
+import { Plus, FileText, List } from 'lucide-react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import type { Tour } from '@/lib/types'
@@ -62,6 +62,13 @@ export function TourDashboard({ tour, shows, userName }: Props) {
             >
               <FileText className="h-4 w-4" />
               Tech Rider
+            </Link>
+            <Link
+              href={`/artist/tours/${tour.id}/input-list`}
+              className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-xs hover:bg-zinc-50 transition-colors"
+            >
+              <List className="h-4 w-4" />
+              Input List
             </Link>
             <Button onClick={() => setAddOpen(true)}>
               <Plus className="h-4 w-4 mr-1.5" />

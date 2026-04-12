@@ -58,6 +58,15 @@ export const ADVANCE_CHECK_ITEMS: AdvanceCheckItem[] = [
 
   // ── Audio ────────────────────────────────────────────────────────────────
   {
+    id: 'audio_channel_count',
+    category: 'Audio',
+    label: 'Input Channel Count',
+    note: 'Confirm venue console has enough input channels for the full input list.',
+    priority: 'critical',
+    rider: { section: 'audio', field: 'required_channel_count', label: 'Tour requires' },
+    venue: { section: 'audio', field: 'foh_channel_count', label: 'Venue console supports' },
+  },
+  {
     id: 'audio_spl',
     category: 'Audio',
     label: 'SPL Limit',

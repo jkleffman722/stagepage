@@ -161,6 +161,46 @@ export interface TechRiderSection {
   updated_at: string
 }
 
+// ============================================================
+// Input List
+// ============================================================
+
+export const INPUT_TYPES = [
+  'Dynamic mic',
+  'Condenser mic',
+  'Ribbon mic',
+  'Active DI',
+  'Passive DI',
+  'Wireless (dynamic)',
+  'Wireless (condenser)',
+  'Other',
+] as const
+
+export type InputType = typeof INPUT_TYPES[number]
+
+export interface InputList {
+  id: string
+  tour_id: string
+  created_at: string
+  updated_at: string
+}
+
+export interface InputListChannel {
+  id: string
+  list_id: string
+  channel_number: number | null
+  source_name: string | null
+  input_type: string | null
+  mic_model: string | null
+  phantom_power: boolean | null
+  stage_location: string | null
+  monitor_mixes: string | null
+  notes: string | null
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
 export type RiderSectionKey =
   | 'tour_info'
   | 'audio'
@@ -201,7 +241,8 @@ export const TECH_RIDER_SECTIONS: RiderSectionDefinition[] = [
       { key: 'side_front_fills', label: 'Side / Front Fills', type: 'text', placeholder: 'e.g. Cohesion CP6' },
       { key: 'foh_console', label: 'FOH Console (tour carries)', type: 'text', placeholder: 'e.g. DiGiCo SD12' },
       { key: 'monitor_console', label: 'Monitor Console (tour carries)', type: 'text', placeholder: 'e.g. DiGiCo SD9' },
-      { key: 'required_monitor_mixes', label: 'Monitor Mixes Required', type: 'number', placeholder: 'e.g. 8' },
+      { key: 'required_channel_count', label: 'Total Input Channels', type: 'number', placeholder: 'Auto-populated from input list' },
+      { key: 'required_monitor_mixes', label: 'Monitor Mixes Required', type: 'number', placeholder: 'Auto-populated from input list' },
       { key: 'venue_audio_requirements', label: 'Venue Must Provide', type: 'textarea', placeholder: 'What the venue needs to provide or prepare (tie-in connection, console removal, etc.)' },
       { key: 'house_consoles_removed', label: 'House Consoles Must Be Removed?', type: 'boolean' },
       { key: 'audio_notes', label: 'Notes', type: 'textarea' },
