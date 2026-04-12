@@ -43,8 +43,8 @@ export const ADVANCE_CHECK_ITEMS: AdvanceCheckItem[] = [
     label: 'Service Type',
     note: 'Tour typically requires 3-phase. Confirm venue service type matches.',
     priority: 'critical',
-    rider: { section: 'power', field: 'power_notes', label: 'Tour power notes' },
-    venue: { section: 'power', field: 'service_type', label: 'Venue service type' },
+    rider: { section: 'power', field: 'required_service_type', label: 'Tour requires' },
+    venue: { section: 'power', field: 'service_type', label: 'Venue provides' },
   },
   {
     id: 'power_known_issues',
@@ -81,8 +81,8 @@ export const ADVANCE_CHECK_ITEMS: AdvanceCheckItem[] = [
     label: 'Monitor Mix Count',
     note: 'Confirm venue console supports the number of independent mixes the tour needs.',
     priority: 'important',
-    rider: null,
-    venue: { section: 'audio', field: 'monitor_mix_count', label: 'Venue monitor mixes' },
+    rider: { section: 'audio', field: 'required_monitor_mixes', label: 'Tour requires' },
+    venue: { section: 'audio', field: 'monitor_mix_count', label: 'Venue supports' },
   },
   {
     id: 'audio_console_format',
@@ -214,13 +214,22 @@ export const ADVANCE_CHECK_ITEMS: AdvanceCheckItem[] = [
 
   // ── Production ───────────────────────────────────────────────────────────
   {
-    id: 'production_stage_dims',
+    id: 'production_stage_width',
     category: 'Production',
-    label: 'Stage Dimensions',
-    note: 'Confirm stage is wide/deep enough for the production.',
+    label: 'Stage Width',
+    note: 'Confirm venue stage is wide enough for the production.',
     priority: 'critical',
-    rider: { section: 'stage_requirements', field: 'stage_notes', label: 'Tour notes' },
+    rider: { section: 'stage_requirements', field: 'min_stage_width', label: 'Tour minimum' },
     venue: { section: 'stage', field: 'full_deck', label: 'Venue stage dims' },
+  },
+  {
+    id: 'production_stage_depth',
+    category: 'Production',
+    label: 'Stage Depth',
+    note: 'Confirm venue stage is deep enough for the production.',
+    priority: 'critical',
+    rider: { section: 'stage_requirements', field: 'min_stage_depth', label: 'Tour minimum' },
+    venue: { section: 'stage', field: 'performance_area', label: 'Venue performance area' },
   },
   {
     id: 'production_rigging',

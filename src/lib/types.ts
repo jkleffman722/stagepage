@@ -129,6 +129,7 @@ export interface FieldDefinition {
   type: 'text' | 'number' | 'select' | 'textarea' | 'boolean'
   options?: string[]
   placeholder?: string
+  defaultValue?: string | number | boolean
 }
 
 export interface SectionDefinition {
@@ -200,6 +201,7 @@ export const TECH_RIDER_SECTIONS: RiderSectionDefinition[] = [
       { key: 'side_front_fills', label: 'Side / Front Fills', type: 'text', placeholder: 'e.g. Cohesion CP6' },
       { key: 'foh_console', label: 'FOH Console (tour carries)', type: 'text', placeholder: 'e.g. DiGiCo SD12' },
       { key: 'monitor_console', label: 'Monitor Console (tour carries)', type: 'text', placeholder: 'e.g. DiGiCo SD9' },
+      { key: 'required_monitor_mixes', label: 'Monitor Mixes Required', type: 'number', placeholder: 'e.g. 8' },
       { key: 'venue_audio_requirements', label: 'Venue Must Provide', type: 'textarea', placeholder: 'What the venue needs to provide or prepare (tie-in connection, console removal, etc.)' },
       { key: 'house_consoles_removed', label: 'House Consoles Must Be Removed?', type: 'boolean' },
       { key: 'audio_notes', label: 'Notes', type: 'textarea' },
@@ -212,7 +214,7 @@ export const TECH_RIDER_SECTIONS: RiderSectionDefinition[] = [
       { key: 'house_rig_struck', label: 'House Rig Must Be Struck?', type: 'boolean' },
       { key: 'haze_allowed', label: 'Haze / Atmosphere Allowed?', type: 'boolean' },
       { key: 'haze_notes', label: 'Haze Notes', type: 'text', placeholder: 'e.g. Fire watch required — $105/hr; must notify venue 2 weeks out' },
-      { key: 'co2_request', label: 'CO₂ Request', type: 'text', placeholder: 'e.g. 6 tanks 20lb non-syphon' },
+      { key: 'co2_request', label: 'CO₂ Request', type: 'text', placeholder: 'e.g. 6 tanks 20lb non-syphon', defaultValue: '6 tanks 20lb non-syphon' },
       { key: 'tour_ld', label: 'Tour LD', type: 'text', placeholder: 'Name' },
       { key: 'lighting_notes', label: 'Notes', type: 'textarea' },
     ],
@@ -231,6 +233,7 @@ export const TECH_RIDER_SECTIONS: RiderSectionDefinition[] = [
     key: 'power',
     label: 'Power Requirements',
     fields: [
+      { key: 'required_service_type', label: 'Required Service Type', type: 'select', options: ['Single-phase', 'Three-phase'], defaultValue: 'Three-phase' },
       { key: 'lx_rigging_power', label: 'Rigging / LX Power Needed', type: 'text', placeholder: 'e.g. (3) 400A + (1) 200A 3-phase' },
       { key: 'lx_rigging_location', label: 'Rigging / LX Power Location', type: 'text', placeholder: 'e.g. USR' },
       { key: 'audio_power', label: 'Audio Power Needed', type: 'text', placeholder: 'e.g. (2) 200A 3-phase' },
@@ -238,13 +241,15 @@ export const TECH_RIDER_SECTIONS: RiderSectionDefinition[] = [
       { key: 'video_power', label: 'Video Power Needed', type: 'text', placeholder: 'e.g. (1) 100A 3-phase' },
       { key: 'video_location', label: 'Video Power Location', type: 'text', placeholder: 'e.g. Audio distro' },
       { key: 'extra_feeder', label: 'Extra Feeder Requirements', type: 'textarea', placeholder: 'Any additional power needs' },
-      { key: 'power_notes', label: 'Notes', type: 'textarea', placeholder: 'e.g. All 3-phase 240V within 100′ of location. Cable runs in public areas to be matted.' },
+      { key: 'power_notes', label: 'Notes', type: 'textarea', defaultValue: 'All 3-phase 240V within 100′ of location. Cable runs in public areas to be matted.' },
     ],
   },
   {
     key: 'stage_requirements',
     label: 'Stage & Production Requirements',
     fields: [
+      { key: 'min_stage_width', label: 'Minimum Stage Width Required', type: 'text', placeholder: "e.g. 60′" },
+      { key: 'min_stage_depth', label: 'Minimum Stage Depth Required', type: 'text', placeholder: "e.g. 30′" },
       { key: 'risers_needed', label: 'Risers Needed', type: 'textarea', placeholder: 'e.g. (1) 8′×8′ @ 16″' },
       { key: 'barricade_distance', label: 'Barricade: Distance from DSE', type: 'text', placeholder: "e.g. 8′ from downstage edge" },
       { key: 'barricade_type', label: 'Barricade Type Preferred', type: 'text', placeholder: 'e.g. Mojo or equivalent' },
@@ -258,20 +263,20 @@ export const TECH_RIDER_SECTIONS: RiderSectionDefinition[] = [
     key: 'labor_defaults',
     label: 'Labor Defaults',
     fields: [
-      { key: 'crew_chief', label: 'Crew Chief (Load In · Show · Load Out)', type: 'text', placeholder: 'e.g. 1 · 1 · 1' },
-      { key: 'electrician', label: 'Electrician (Load In · Show · Load Out)', type: 'text', placeholder: 'e.g. 1 · 1 · 1' },
-      { key: 'head_rigger', label: 'Head Rigger (Load In · Show · Load Out)', type: 'text', placeholder: 'e.g. 1 · 1 · 1' },
-      { key: 'up_riggers', label: 'Up Riggers (Load In count)', type: 'number', placeholder: 'e.g. 8' },
-      { key: 'down_riggers', label: 'Down Riggers (Load Out count)', type: 'number', placeholder: 'e.g. 4' },
-      { key: 'loaders', label: 'Loaders', type: 'number', placeholder: 'e.g. 4' },
-      { key: 'forklift', label: 'Forklift', type: 'number', placeholder: 'e.g. 1' },
+      { key: 'crew_chief', label: 'Crew Chief (Load In · Show · Load Out)', type: 'text', placeholder: 'e.g. 1 · 1 · 1', defaultValue: '1 · 1 · 1' },
+      { key: 'electrician', label: 'Electrician (Load In · Show · Load Out)', type: 'text', placeholder: 'e.g. 1 · 1 · 1', defaultValue: '1 · 1 · 1' },
+      { key: 'head_rigger', label: 'Head Rigger (Load In · Show · Load Out)', type: 'text', placeholder: 'e.g. 1 · 1 · 1', defaultValue: '1 · 1 · 1' },
+      { key: 'up_riggers', label: 'Up Riggers (Load In count)', type: 'number', placeholder: 'e.g. 8', defaultValue: 8 },
+      { key: 'down_riggers', label: 'Down Riggers (Load Out count)', type: 'number', placeholder: 'e.g. 4', defaultValue: 4 },
+      { key: 'loaders', label: 'Loaders', type: 'number', placeholder: 'e.g. 4', defaultValue: 4 },
+      { key: 'forklift', label: 'Forklift', type: 'number', placeholder: 'e.g. 1', defaultValue: 1 },
       { key: 'first_call_total', label: '1st Call — Total', type: 'number', placeholder: 'e.g. 14' },
       { key: 'first_call_breakdown', label: '1st Call — Dept Breakdown', type: 'text', placeholder: 'e.g. 8 LX · 6 Audio' },
       { key: 'second_call_breakdown', label: '2nd Call — Dept Breakdown', type: 'text', placeholder: 'e.g. 4 Audio · 2 Backline · 2 Video' },
       { key: 'load_out_total', label: 'Load Out — Total', type: 'number', placeholder: 'e.g. 22' },
       { key: 'load_out_breakdown', label: 'Load Out — Dept Breakdown', type: 'text', placeholder: 'e.g. 8 LX · 6 Audio · 4 Backline · 4 Video' },
-      { key: 'labor_min_call', label: 'Labor Min Call', type: 'text', placeholder: 'e.g. 4hr min, 1.5× after midnight' },
-      { key: 'feeding_rules', label: 'Feeding Rules', type: 'text', placeholder: 'e.g. Feed after 5 hours worked' },
+      { key: 'labor_min_call', label: 'Labor Min Call', type: 'text', placeholder: 'e.g. 4hr min, 1.5× after midnight', defaultValue: '4hr min, 1.5× after midnight' },
+      { key: 'feeding_rules', label: 'Feeding Rules', type: 'text', placeholder: 'e.g. Feed after 5 hours worked', defaultValue: 'Feed after 5 hours worked' },
       { key: 'labor_notes', label: 'Notes', type: 'textarea' },
     ],
   },
@@ -279,10 +284,10 @@ export const TECH_RIDER_SECTIONS: RiderSectionDefinition[] = [
     key: 'hospitality',
     label: 'Hospitality Requirements',
     fields: [
-      { key: 'bath_towels', label: 'Bath Towels Needed', type: 'number', placeholder: 'e.g. 50' },
-      { key: 'stage_towels', label: 'Stage Towels Needed', type: 'number', placeholder: 'e.g. 10' },
-      { key: 'tabling_needs', label: 'Tabling Needs', type: 'text', placeholder: "e.g. (3) 6′ tables with (2) chairs each in lobby" },
-      { key: 'aftershow_cash', label: 'After-Show Food Cash', type: 'text', placeholder: 'e.g. $400' },
+      { key: 'bath_towels', label: 'Bath Towels Needed', type: 'number', placeholder: 'e.g. 50', defaultValue: 50 },
+      { key: 'stage_towels', label: 'Stage Towels Needed', type: 'number', placeholder: 'e.g. 10', defaultValue: 10 },
+      { key: 'tabling_needs', label: 'Tabling Needs', type: 'text', placeholder: "e.g. (3) 6′ tables with (2) chairs each in lobby", defaultValue: "(3) 6′ tables with (2) chairs each in lobby" },
+      { key: 'aftershow_cash', label: 'After-Show Food Cash', type: 'text', placeholder: 'e.g. $400', defaultValue: '$400' },
       { key: 'catering_rider', label: 'Catering Rider Link / Notes', type: 'textarea', placeholder: 'Link to catering rider document or key requirements' },
       { key: 'hospitality_notes', label: 'Notes', type: 'textarea' },
     ],
@@ -292,7 +297,7 @@ export const TECH_RIDER_SECTIONS: RiderSectionDefinition[] = [
     label: 'General Production Notes',
     fields: [
       { key: 'notes', label: 'Notes', type: 'textarea', placeholder: 'General requirements, standards, or anything else the venue needs to know before advancing this show.' },
-      { key: 'standard_note', label: 'Standard Advance Note', type: 'textarea', placeholder: 'e.g. With this document should be the tour stage plot, rigging plot and general rider. If you have not received this, please reach out to Production Manager.' },
+      { key: 'standard_note', label: 'Standard Advance Note', type: 'textarea', defaultValue: 'With this document should be the tour stage plot, rigging plot and general rider. If you have not received this, please reach out to Production Manager.' },
     ],
   },
 ]

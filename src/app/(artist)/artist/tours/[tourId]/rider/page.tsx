@@ -43,6 +43,29 @@ export default async function TechRiderPage({ params }: Props) {
       throw new Error('Failed to create tech rider')
     }
     rider = newRider
+
+    // Pre-populate all sections with their default values
+    const defaultSections = TECH_RIDER_SECTIONS
+      .map((sectionDef, index) => {
+        const fields: Record<string, string | number | boolean | null> = {}
+        sectionDef.fields.forEach(f => {
+          fields[f.key] = f.defaultValue !== undefined ? f.defaultValue : null
+        })
+        const hasAnyDefault = Object.values(fields).some(v => v !== null)
+        if (!hasAnyDefault) return null
+        return {
+          rider_id: newRider.id,
+          section_key: sectionDef.key,
+          section_label: sectionDef.label,
+          fields,
+          sort_order: index,
+        }
+      })
+      .filter(Boolean)
+
+    if (defaultSections.length > 0) {
+      await supabase.from('tech_rider_sections').insert(defaultSections)
+    }
   }
 
   const { data: sections } = await supabase
