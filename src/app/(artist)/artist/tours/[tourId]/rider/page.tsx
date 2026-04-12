@@ -43,8 +43,16 @@ export default async function TechRiderPage({ params }: Props) {
       throw new Error('Failed to create tech rider')
     }
     rider = newRider
+  }
 
-    // Pre-populate all sections with their default values
+  let { data: sections } = await supabase
+    .from('tech_rider_sections')
+    .select('*')
+    .eq('rider_id', rider.id)
+    .order('sort_order')
+
+  // Seed defaults if no sections exist yet (handles riders created before defaults were added)
+  if (!sections || sections.length === 0) {
     const defaultSections = TECH_RIDER_SECTIONS
       .map((sectionDef, index) => {
         const fields: Record<string, string | number | boolean | null> = {}
@@ -54,7 +62,7 @@ export default async function TechRiderPage({ params }: Props) {
         const hasAnyDefault = Object.values(fields).some(v => v !== null)
         if (!hasAnyDefault) return null
         return {
-          rider_id: newRider.id,
+          rider_id: rider.id,
           section_key: sectionDef.key,
           section_label: sectionDef.label,
           fields,
@@ -65,14 +73,14 @@ export default async function TechRiderPage({ params }: Props) {
 
     if (defaultSections.length > 0) {
       await supabase.from('tech_rider_sections').insert(defaultSections)
+      const { data: seeded } = await supabase
+        .from('tech_rider_sections')
+        .select('*')
+        .eq('rider_id', rider.id)
+        .order('sort_order')
+      sections = seeded
     }
   }
-
-  const { data: sections } = await supabase
-    .from('tech_rider_sections')
-    .select('*')
-    .eq('rider_id', rider.id)
-    .order('sort_order')
 
   const sectionMap = new Map<string, TechRiderSection>(
     (sections ?? []).map(s => [s.section_key, s])
