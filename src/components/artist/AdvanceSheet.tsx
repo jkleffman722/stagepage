@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { Save } from 'lucide-react'
+import { Save, MessageSquare, ChevronDown, ChevronUp, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { TechRiderSection, PacketSection } from '@/lib/types'
+import { PACKET_SECTIONS } from '@/lib/types'
 
 // ── Data helpers ──────────────────────────────────────────────────────────────
 
@@ -35,6 +36,7 @@ interface Props {
   tour: { artist_name: string; tour_name: string }
   show: { event_date: string }
   venue: { name: string; address: string | null; city: string | null; state: string | null; capacity: number | null } | null
+  venueId: string | null
   riderSections: TechRiderSection[]
   packetSections: PacketSection[]
   venuePacketApproved: boolean
@@ -44,10 +46,12 @@ interface Props {
 
 export function AdvanceSheet({
   advanceId,
+  showId,
   initialFields,
   tour,
   show,
   venue,
+  venueId,
   riderSections,
   packetSections,
   venuePacketApproved,
@@ -63,6 +67,26 @@ export function AdvanceSheet({
 
   const rider = buildMap(riderSections)
   const packet = buildMap(packetSections)
+
+  // Compute missing required packet fields for the request panel
+  const missingRequiredPacketFields = PACKET_SECTIONS.flatMap(sectionDef =>
+    sectionDef.fields
+      .filter(f => f.required)
+      .filter(f => {
+        const v = packet.get(sectionDef.key)?.[f.key]
+        return v == null || v === '' || v === false
+      })
+      .map(f => ({
+        path: `${sectionDef.key}.${f.key}`,
+        sectionLabel: sectionDef.label,
+        fieldLabel: f.label,
+      }))
+  )
+
+  const [requestOpen, setRequestOpen] = useState(false)
+  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set())
+  const [requestMessage, setRequestMessage] = useState('')
+  const [sendingRequest, setSendingRequest] = useState(false)
 
   function set(key: string, value: string) {
     setFields(prev => ({ ...prev, [key]: value }))
@@ -81,6 +105,24 @@ export function AdvanceSheet({
     setSaving(false)
     setDirty(false)
     router.refresh()
+  }
+
+  async function handleSendRequest() {
+    if (!venueId || selectedFields.size === 0) return
+    setSendingRequest(true)
+    const supabase = createClient()
+    const { error } = await supabase.from('packet_field_requests').insert({
+      venue_id: venueId,
+      show_id: showId,
+      requested_fields: Array.from(selectedFields),
+      message: requestMessage.trim() || null,
+    })
+    if (error) { toast.error(error.message); setSendingRequest(false); return }
+    toast.success('Request sent — the venue will see it on their packet page')
+    setRequestOpen(false)
+    setSelectedFields(new Set())
+    setRequestMessage('')
+    setSendingRequest(false)
   }
 
   const formattedDate = new Date(show.event_date + 'T12:00:00').toLocaleDateString('en-US', {
@@ -104,6 +146,74 @@ export function AdvanceSheet({
           {saving ? 'Saving…' : 'Save'}
         </Button>
       </div>
+
+      {/* ── VENUE REQUEST PANEL ────────────────────────────────────────── */}
+      {venueId && missingRequiredPacketFields.length > 0 && (
+        <div className={cn(
+          'rounded-lg border bg-white overflow-hidden transition-colors',
+          requestOpen ? 'border-blue-200' : 'border-orange-200'
+        )}>
+          <button
+            className="w-full flex items-center justify-between px-4 py-3 text-left"
+            onClick={() => setRequestOpen(v => !v)}
+          >
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-orange-400" />
+              <span className="text-sm font-medium text-zinc-700">
+                {missingRequiredPacketFields.length} required field{missingRequiredPacketFields.length !== 1 ? 's' : ''} missing from venue packet
+              </span>
+              <span className="text-xs text-zinc-400">— request them from the venue</span>
+            </div>
+            {requestOpen ? <ChevronUp className="h-4 w-4 text-zinc-400" /> : <ChevronDown className="h-4 w-4 text-zinc-400" />}
+          </button>
+
+          {requestOpen && (
+            <div className="border-t border-zinc-100 px-4 pb-4 pt-3 space-y-3">
+              <p className="text-xs text-zinc-500">
+                Select the fields you need and send a request. The venue will see it on their packet page.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                {missingRequiredPacketFields.map(f => (
+                  <label key={f.path} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="rounded border-zinc-300"
+                      checked={selectedFields.has(f.path)}
+                      onChange={e => {
+                        setSelectedFields(prev => {
+                          const next = new Set(prev)
+                          if (e.target.checked) next.add(f.path)
+                          else next.delete(f.path)
+                          return next
+                        })
+                      }}
+                    />
+                    <span className="text-xs text-zinc-600">
+                      <span className="text-zinc-400">{f.sectionLabel} · </span>{f.fieldLabel}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <div className="space-y-2">
+                <Input
+                  value={requestMessage}
+                  onChange={e => setRequestMessage(e.target.value)}
+                  placeholder="Optional note to the venue (e.g. advancing for April 26 show)"
+                  className="text-sm h-8"
+                />
+                <Button
+                  size="sm"
+                  onClick={handleSendRequest}
+                  disabled={selectedFields.size === 0 || sendingRequest}
+                >
+                  <Check className="h-3.5 w-3.5 mr-1.5" />
+                  {sendingRequest ? 'Sending…' : `Send request (${selectedFields.size} field${selectedFields.size !== 1 ? 's' : ''})`}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── HOT POINTS ─────────────────────────────────────────────────── */}
       <Section title="Hot Points">

@@ -128,6 +128,7 @@ export default async function AdvancePage({ params }: Props) {
           tour={tour}
           show={{ event_date: show.event_date }}
           venue={venue}
+          venueId={show.venue_id}
           riderSections={riderSections}
           packetSections={packetSections}
           venuePacketApproved={venuePacketApproved}

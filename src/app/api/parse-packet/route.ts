@@ -30,15 +30,26 @@ For textarea fields (gear lists), use newlines to separate multiple items.
 Field structure:
 ${JSON.stringify(fieldMap, null, 2)}
 
-Return a JSON object shaped like:
+Return a JSON object with two top-level keys:
+
+1. "fields": the extracted data shaped like:
 {
   "contacts": { "production_manager": "", "general_manager": "", ... },
   "stage": { "full_deck": "", ... },
   "audio": { "foh_console": "", ... },
   ...
 }
+Include all section keys even if empty. Match field keys exactly.
 
-Include all section keys even if empty. Match field keys exactly.`
+2. "low_confidence": a flat array of "section_key.field_key" strings for any field where:
+- The value was inferred rather than explicitly stated
+- The document used ambiguous or non-standard formatting
+- You had to guess the mapping
+- The value looks plausible but you are not certain it is correct
+
+Example: ["stage.full_deck", "power.available_to_production"]
+
+If you are confident in all extractions, return an empty array for low_confidence.`
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
@@ -70,7 +81,11 @@ Include all section keys even if empty. Match field keys exactly.`
     const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
     const parsed = JSON.parse(cleaned)
 
-    return NextResponse.json({ fields: parsed })
+    // Support both old shape { section: {...} } and new shape { fields: {...}, low_confidence: [] }
+    const fields = parsed.fields ?? parsed
+    const lowConfidence: string[] = Array.isArray(parsed.low_confidence) ? parsed.low_confidence : []
+
+    return NextResponse.json({ fields, lowConfidence })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error('PDF parse error:', message)

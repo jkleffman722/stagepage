@@ -68,6 +68,7 @@ export interface FieldSource {
   type: 'pdf' | 'manual'
   attachmentId?: string
   fileName?: string
+  confidence?: 'low'
 }
 
 export interface PacketSection {
@@ -130,6 +131,7 @@ export interface FieldDefinition {
   options?: string[]
   placeholder?: string
   defaultValue?: string | number | boolean
+  required?: boolean
 }
 
 export interface SectionDefinition {
@@ -356,14 +358,14 @@ export const PACKET_SECTIONS: SectionDefinition[] = [
     key: 'contacts',
     label: 'Contacts',
     fields: [
-      { key: 'production_manager', label: 'Production Manager', type: 'text', placeholder: 'Name · email · phone' },
+      { key: 'production_manager', label: 'Production Manager', type: 'text', placeholder: 'Name · email · phone', required: true },
       { key: 'general_manager', label: 'General Manager', type: 'text', placeholder: 'Name · email' },
       { key: 'advance_contact', label: 'Advance Contact', type: 'text', placeholder: 'Name · email' },
       { key: 'house_sound_engineer', label: 'House Sound Engineer', type: 'text', placeholder: 'Name · email · phone' },
       { key: 'house_ld', label: 'House Lighting Designer', type: 'text', placeholder: 'Name · email · phone' },
       { key: 'head_rigger', label: 'Head Rigger', type: 'text', placeholder: 'Name · email · phone' },
       { key: 'stage_manager', label: 'Stage Manager / Head Carpenter', type: 'text', placeholder: 'Name · email · phone' },
-      { key: 'emergency_contact', label: 'Emergency / After-Hours Contact', type: 'text', placeholder: 'Name · phone (available during load-in and show)' },
+      { key: 'emergency_contact', label: 'Emergency / After-Hours Contact', type: 'text', placeholder: 'Name · phone (available during load-in and show)', required: true },
       { key: 'vip_merch_contact', label: 'VIP / Merch Contact', type: 'text', placeholder: 'Name · email' },
       { key: 'box_office', label: 'Box Office', type: 'text', placeholder: 'Name · email · hours' },
       { key: 'additional_contacts', label: 'Additional Contacts', type: 'textarea', placeholder: 'Any other key contacts and roles...' },
@@ -373,12 +375,12 @@ export const PACKET_SECTIONS: SectionDefinition[] = [
     key: 'schedule',
     label: 'Show Schedule',
     fields: [
-      { key: 'crew_access', label: 'Earliest Crew Access', type: 'text', placeholder: 'e.g. 8:00 AM' },
+      { key: 'crew_access', label: 'Earliest Crew Access', type: 'text', placeholder: 'e.g. 8:00 AM', required: true },
       { key: 'load_in_window', label: 'Load-In Window', type: 'text', placeholder: 'e.g. 9:00 AM – 3:00 PM' },
       { key: 'soundcheck_window', label: 'Soundcheck Window', type: 'text', placeholder: 'e.g. 3:00 PM – 6:00 PM' },
       { key: 'doors_open', label: 'Doors Open to Audience', type: 'text', placeholder: 'e.g. 7:00 PM' },
       { key: 'show_start', label: 'Show Start Time', type: 'text', placeholder: 'e.g. 8:00 PM' },
-      { key: 'hard_curfew', label: 'Hard Curfew', type: 'text', placeholder: 'e.g. 11:00 PM — non-negotiable' },
+      { key: 'hard_curfew', label: 'Hard Curfew', type: 'text', placeholder: 'e.g. 11:00 PM — non-negotiable', required: true },
       { key: 'load_out_window', label: 'Load-Out / Strike Window', type: 'text', placeholder: 'e.g. 11:00 PM – 2:00 AM' },
       { key: 'clear_by', label: 'Venue Must Be Clear By', type: 'text', placeholder: 'e.g. 2:00 AM' },
       { key: 'schedule_notes', label: 'Notes', type: 'textarea', placeholder: 'Noise ordinances, city curfews, overtime fees, etc.' },
@@ -388,14 +390,14 @@ export const PACKET_SECTIONS: SectionDefinition[] = [
     key: 'stage',
     label: 'Stage',
     fields: [
-      { key: 'full_deck', label: 'Full Deck (W × D × H)', type: 'text', placeholder: "e.g. 86′ × 34′ × 3′5″" },
+      { key: 'full_deck', label: 'Full Deck (W × D × H)', type: 'text', placeholder: "e.g. 86′ × 34′ × 3′5″", required: true },
       { key: 'performance_area', label: 'Performance Area (W × D)', type: 'text', placeholder: "e.g. 47′10″ × 28′" },
       { key: 'stage_height', label: 'Stage Height Above Audience Floor', type: 'text', placeholder: "e.g. 4′" },
       { key: 'surface_type', label: 'Stage Surface Type', type: 'text', placeholder: 'e.g. Maple hardwood (sprung), plywood, concrete' },
       { key: 'deck_load', label: 'Deck Load Capacity', type: 'text', placeholder: 'e.g. 150 lbs per sq ft' },
-      { key: 'wing_sl', label: 'Wing Space — Stage Left', type: 'text', placeholder: "e.g. 12′ wide" },
-      { key: 'wing_sr', label: 'Wing Space — Stage Right', type: 'text', placeholder: "e.g. 10′ wide" },
-      { key: 'trim_height', label: 'Trim / Grid Height', type: 'text', placeholder: "e.g. 60′ stage to grid" },
+      { key: 'wing_sl', label: 'Wing Space — Stage Left', type: 'text', placeholder: "e.g. 12′ wide", required: true },
+      { key: 'wing_sr', label: 'Wing Space — Stage Right', type: 'text', placeholder: "e.g. 10′ wide", required: true },
+      { key: 'trim_height', label: 'Trim / Grid Height', type: 'text', placeholder: "e.g. 60′ stage to grid", required: true },
       { key: 'foh_distance', label: 'Downstage Edge to FOH', type: 'text', placeholder: "e.g. 70′" },
       { key: 'foh_depth', label: 'FOH Depth', type: 'text', placeholder: "e.g. 12′" },
       { key: 'snake_run', label: 'Snake Run (SR or SL)', type: 'text', placeholder: "e.g. minimum 180′" },
@@ -431,7 +433,7 @@ export const PACKET_SECTIONS: SectionDefinition[] = [
       { key: 'di_boxes', label: 'DI Boxes', type: 'textarea', placeholder: 'e.g. 9× Countryman 85\n4× Whirlwind PCDI\n2× Radial ProD2' },
       { key: 'wireless', label: 'Wireless Systems', type: 'textarea', placeholder: 'e.g. 1× Shure AD2 Handheld\n2× Shure AD2 Lav Beltpack' },
       { key: 'comms', label: 'Comms', type: 'textarea', placeholder: 'e.g. All wired. All positions have headsets. 6 additional packs available.' },
-      { key: 'decibel_limit', label: 'Decibel Limit', type: 'text', placeholder: 'e.g. 105dB maximum' },
+      { key: 'decibel_limit', label: 'Decibel Limit', type: 'text', placeholder: 'e.g. 105dB maximum', required: true },
       { key: 'audio_notes', label: 'Notes', type: 'textarea' },
     ],
   },
@@ -472,13 +474,13 @@ export const PACKET_SECTIONS: SectionDefinition[] = [
     key: 'power',
     label: 'Power',
     fields: [
-      { key: 'service_type', label: 'Service Type', type: 'select', options: ['Single-phase', 'Three-phase (wye)', 'Three-phase (delta)'] },
+      { key: 'service_type', label: 'Service Type', type: 'select', options: ['Single-phase', 'Three-phase (wye)', 'Three-phase (delta)'], required: true },
       { key: 'voltage', label: 'Voltage', type: 'text', placeholder: 'e.g. 120/208V' },
       { key: 'total_service', label: 'Total Service Size', type: 'text', placeholder: 'e.g. 800A' },
-      { key: 'available_to_production', label: 'Available to Touring Production', type: 'text', placeholder: 'e.g. 400A (note: total service ≠ available)' },
+      { key: 'available_to_production', label: 'Available to Touring Production', type: 'text', placeholder: 'e.g. 400A (note: total service ≠ available)', required: true },
       { key: 'lighting_power', label: 'Lighting Power', type: 'text', placeholder: 'e.g. 400A at SL panel' },
       { key: 'audio_power', label: 'Audio Power', type: 'text', placeholder: 'e.g. 200A at SL panel' },
-      { key: 'power_location', label: 'Panel Locations & Distance to Stage', type: 'textarea', placeholder: 'e.g. SL wing panel: 15ft from stage edge\nSR wing panel: 12ft from stage edge\nFOH panel: in booth' },
+      { key: 'power_location', label: 'Panel Locations & Distance to Stage', type: 'textarea', placeholder: 'e.g. SL wing panel: 15ft from stage edge\nSR wing panel: 12ft from stage edge\nFOH panel: in booth', required: true },
       { key: 'distro_type', label: 'Distro / Connector Type', type: 'text', placeholder: 'e.g. Cam-Lok, L14-30R, L21-30R' },
       { key: 'shore_power', label: 'Shore Power Available', type: 'boolean' },
       { key: 'generator_available', label: 'Generator Available', type: 'boolean' },
@@ -503,9 +505,9 @@ export const PACKET_SECTIONS: SectionDefinition[] = [
     key: 'load_in',
     label: 'Load-In & Parking',
     fields: [
-      { key: 'dock_height', label: 'Dock Height Above Ground', type: 'text', placeholder: 'e.g. 48 inches' },
+      { key: 'dock_height', label: 'Dock Height Above Ground', type: 'text', placeholder: 'e.g. 48 inches', required: true },
       { key: 'dock_door_dimensions', label: 'Dock Door Dimensions (W × H)', type: 'text', placeholder: "e.g. 10′ × 12′" },
-      { key: 'dock_bays', label: 'Number of Loading Bays', type: 'number', placeholder: 'e.g. 2' },
+      { key: 'dock_bays', label: 'Number of Loading Bays', type: 'number', placeholder: 'e.g. 2', required: true },
       { key: 'dock_leveler', label: 'Dock Leveler Type', type: 'select', options: ['None', 'Dock plate (manual)', 'Mechanical', 'Hydraulic', 'Electric hydraulic'] },
       { key: 'dock_access_hours', label: 'Dock Access Hours', type: 'text', placeholder: 'e.g. 7:00 AM – 2:00 AM' },
       { key: 'forklift', label: 'Forklift Available?', type: 'boolean' },
@@ -514,8 +516,8 @@ export const PACKET_SECTIONS: SectionDefinition[] = [
       { key: 'freight_elevator', label: 'Freight Elevator', type: 'text', placeholder: "e.g. 11′4″W × 7′11″T × 10′1″D" },
       { key: 'stage_clearance', label: 'Stage Clearance (elevator to stage)', type: 'text', placeholder: "e.g. just under 8′W × 7′11″H" },
       { key: 'dead_case_storage', label: 'Dead Case Storage', type: 'textarea', placeholder: "e.g. 28′W × 10′D, SR of elevator before double doors" },
-      { key: 'truck_parking', label: 'Truck / Trailer Parking', type: 'textarea', placeholder: 'Location, number of spaces, surface type' },
-      { key: 'bus_parking', label: 'Tour Bus Parking', type: 'textarea', placeholder: 'Location, number of spaces' },
+      { key: 'truck_parking', label: 'Truck / Trailer Parking', type: 'textarea', placeholder: 'Location, number of spaces, surface type', required: true },
+      { key: 'bus_parking', label: 'Tour Bus Parking', type: 'textarea', placeholder: 'Location, number of spaces', required: true },
       { key: 'crew_parking', label: 'Crew / Personal Vehicle Parking', type: 'textarea', placeholder: 'Location, distance from venue' },
       { key: 'overnight_parking', label: 'Overnight Parking Allowed?', type: 'boolean' },
       { key: 'shore_power_parking', label: 'Shore Power at Parking?', type: 'boolean' },
@@ -526,7 +528,7 @@ export const PACKET_SECTIONS: SectionDefinition[] = [
     key: 'crew',
     label: 'Crew & Labor',
     fields: [
-      { key: 'union_affiliation', label: 'Union Affiliation', type: 'select', options: ['Non-union', 'IATSE', 'IBEW', 'Teamsters', 'Mixed / depends on call'] },
+      { key: 'union_affiliation', label: 'Union Affiliation', type: 'select', options: ['Non-union', 'IATSE', 'IBEW', 'Teamsters', 'Mixed / depends on call'], required: true },
       { key: 'mandatory_crew', label: 'Mandatory House Crew Required?', type: 'boolean' },
       { key: 'min_stagehands', label: 'Minimum Stagehand Count', type: 'number', placeholder: 'e.g. 4' },
       { key: 'crew_cost', label: 'Crew Cost', type: 'text', placeholder: 'e.g. Included up to 4 hrs; overtime billed at $X/hr' },

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { PACKET_SECTIONS, type SectionKey } from '@/lib/types'
 import { toast } from 'sonner'
-import { Upload, FileText, Check, X, Loader2, Trash2 } from 'lucide-react'
+import { Upload, FileText, Check, X, Loader2, Trash2, AlertTriangle } from 'lucide-react'
 
 interface Props {
   packetId: string
@@ -25,6 +25,7 @@ export function PacketPDFUpload({ packetId, venueId, userId, existingAttachments
   const inputRef = useRef<HTMLInputElement>(null)
   const [step, setStep] = useState<Step>('idle')
   const [parsedFields, setParsedFields] = useState<ParsedFields | null>(null)
+  const [lowConfidence, setLowConfidence] = useState<string[]>([])
   const [uploadedFile, setUploadedFile] = useState<{ name: string; path: string } | null>(null)
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -79,8 +80,9 @@ export function PacketPDFUpload({ packetId, venueId, userId, existingAttachments
         return
       }
 
-      const { fields } = await res.json()
+      const { fields, lowConfidence: lc } = await res.json()
       setParsedFields(fields)
+      setLowConfidence(Array.isArray(lc) ? lc : [])
       setStep('review')
     }
     reader.readAsDataURL(file)
@@ -103,6 +105,7 @@ export function PacketPDFUpload({ packetId, venueId, userId, existingAttachments
 
       // Convert string values to proper types
       const fields: Record<string, string | number | boolean | null> = {}
+      const fieldSources: Record<string, { type: 'pdf'; confidence?: 'low' }> = {}
       sectionDef.fields.forEach(f => {
         const val = sectionData[f.key]
         if (!val || val.trim() === '') {
@@ -114,6 +117,12 @@ export function PacketPDFUpload({ packetId, venueId, userId, existingAttachments
         } else {
           fields[f.key] = val
         }
+        if (fields[f.key] !== null) {
+          const path = `${sectionDef.key}.${f.key}`
+          fieldSources[f.key] = lowConfidence.includes(path)
+            ? { type: 'pdf', confidence: 'low' }
+            : { type: 'pdf' }
+        }
       })
 
       await supabase.from('packet_sections').upsert({
@@ -121,6 +130,7 @@ export function PacketPDFUpload({ packetId, venueId, userId, existingAttachments
         section_key: sectionDef.key,
         section_label: sectionDef.label,
         fields,
+        field_sources: fieldSources,
         sort_order: sectionIndex,
         updated_at: now,
       }, { onConflict: 'packet_id,section_key' })
@@ -132,9 +142,15 @@ export function PacketPDFUpload({ packetId, venueId, userId, existingAttachments
       .update({ last_updated_at: now })
       .eq('id', packetId)
 
-    toast.success('Fields applied from PDF — review and edit any section below')
+    const verifyCount = lowConfidence.length
+    toast.success(
+      verifyCount > 0
+        ? `Fields applied — ${verifyCount} field${verifyCount !== 1 ? 's' : ''} flagged for verification`
+        : 'Fields applied from PDF — review and edit any section below'
+    )
     setStep('idle')
     setParsedFields(null)
+    setLowConfidence([])
     router.refresh()
   }
 
@@ -230,6 +246,31 @@ export function PacketPDFUpload({ packetId, venueId, userId, existingAttachments
             </div>
           </CardHeader>
           <CardContent className="pt-0 space-y-3">
+            {lowConfidence.length > 0 && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-amber-700">
+                    {lowConfidence.length} field{lowConfidence.length !== 1 ? 's' : ''} flagged for verification
+                  </p>
+                  <p className="text-xs text-amber-600 mt-0.5">
+                    These values were inferred or ambiguous in the PDF. They&apos;ll be marked in the editor — please verify before publishing.
+                  </p>
+                  <ul className="mt-1.5 space-y-0.5">
+                    {lowConfidence.map(path => {
+                      const [sKey, fKey] = path.split('.')
+                      const sectionDef = PACKET_SECTIONS.find(s => s.key === sKey)
+                      const fieldDef = sectionDef?.fields.find(f => f.key === fKey)
+                      return (
+                        <li key={path} className="text-xs text-amber-700">
+                          {sectionDef?.label} → {fieldDef?.label ?? fKey}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              </div>
+            )}
             {PACKET_SECTIONS.map(sectionDef => {
               const data = parsedFields[sectionDef.key as SectionKey]
               const filledFields = sectionDef.fields.filter(
@@ -247,12 +288,18 @@ export function PacketPDFUpload({ packetId, venueId, userId, existingAttachments
                     </Badge>
                   </div>
                   <div className="bg-white rounded border border-blue-100 divide-y divide-blue-50">
-                    {filledFields.map(f => (
-                      <div key={f.key} className="px-3 py-2 flex gap-4">
-                        <span className="text-xs text-zinc-400 w-36 shrink-0 pt-0.5">{f.label}</span>
-                        <span className="text-xs text-zinc-700 whitespace-pre-line">{data[f.key]}</span>
-                      </div>
-                    ))}
+                    {filledFields.map(f => {
+                      const isLowConf = lowConfidence.includes(`${sectionDef.key}.${f.key}`)
+                      return (
+                        <div key={f.key} className={`px-3 py-2 flex gap-4 ${isLowConf ? 'bg-amber-50/50' : ''}`}>
+                          <span className="text-xs text-zinc-400 w-36 shrink-0 pt-0.5">
+                            {f.label}
+                            {isLowConf && <AlertTriangle className="inline h-3 w-3 text-amber-400 ml-1" />}
+                          </span>
+                          <span className="text-xs text-zinc-700 whitespace-pre-line">{data[f.key]}</span>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )

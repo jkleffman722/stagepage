@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { SectionDefinition, PacketSection, FieldDefinition, FieldSource } from '@/lib/types'
 import { toast } from 'sonner'
-import { ChevronDown, ChevronUp, Check, Pencil, FileText } from 'lucide-react'
+import { ChevronDown, ChevronUp, Check, Pencil, FileText, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -50,6 +50,16 @@ export function PacketSectionEditor({ packetId, sectionDef, existingSection, sor
   const totalCount = sectionDef.fields.length
   const emptyCount = totalCount - filledCount
   const hasData = filledCount > 0
+
+  const missingRequiredCount = sectionDef.fields.filter(f => {
+    if (!f.required) return false
+    const val = existingSection?.fields?.[f.key]
+    return val === null || val === '' || val === undefined
+  }).length
+
+  const lowConfidenceCount = sectionDef.fields.filter(f => {
+    return fieldSources[f.key]?.confidence === 'low'
+  }).length
 
   async function handleSave() {
     setSaving(true)
@@ -106,13 +116,27 @@ export function PacketSectionEditor({ packetId, sectionDef, existingSection, sor
   }
 
   return (
-    <Card className={cn(!hasData && 'border-red-100 bg-red-50/30')}>
+    <Card className={cn(
+      !hasData && 'border-red-100 bg-red-50/30',
+      hasData && missingRequiredCount > 0 && 'border-orange-200',
+    )}>
       <CardHeader className="py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <CardTitle className="text-base">{sectionDef.label}</CardTitle>
-            {hasData && !editing && emptyCount > 0 && (
-              <Badge variant="outline" className="text-xs text-red-500 border-red-200">
+            {missingRequiredCount > 0 && !editing && (
+              <Badge variant="outline" className="text-xs text-orange-600 border-orange-200 bg-orange-50">
+                {missingRequiredCount} required missing
+              </Badge>
+            )}
+            {lowConfidenceCount > 0 && !editing && (
+              <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50">
+                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                {lowConfidenceCount} verify
+              </Badge>
+            )}
+            {hasData && !editing && emptyCount > 0 && missingRequiredCount === 0 && (
+              <Badge variant="outline" className="text-xs text-zinc-400 border-zinc-200">
                 {emptyCount} empty
               </Badge>
             )}
@@ -148,22 +172,32 @@ export function PacketSectionEditor({ packetId, sectionDef, existingSection, sor
             const isEmpty = !val
             const source = fieldSources[field.key]
 
+            const isRequiredEmpty = field.required && isEmpty
+            const isLowConf = source?.confidence === 'low'
             return (
               <div key={field.key} className="space-y-1.5">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <Label
                     htmlFor={field.key}
                     className={cn(
-                      'text-sm',
-                      !editing && isEmpty ? 'text-red-400' : editing ? '' : 'text-zinc-400'
+                      'text-sm flex items-center gap-1',
+                      isRequiredEmpty ? 'text-orange-500' : !editing && isEmpty ? 'text-red-400' : editing ? '' : 'text-zinc-400'
                     )}
                   >
                     {field.label}
-                    {!editing && isEmpty && <span className="ml-1 text-red-400">·</span>}
+                    {field.required && (
+                      <span className={cn('text-xs', isRequiredEmpty ? 'text-orange-500' : 'text-zinc-300')}>*</span>
+                    )}
                   </Label>
-                  {!editing && source && (
-                    <SourceBadge source={source} />
-                  )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isLowConf && !editing && (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-200 rounded px-1 py-px">
+                        <AlertTriangle className="h-2.5 w-2.5" />
+                        Verify
+                      </span>
+                    )}
+                    {!editing && source && <SourceBadge source={source} />}
+                  </div>
                 </div>
                 <FieldInput
                   field={field}
