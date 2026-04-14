@@ -1,17 +1,14 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ShareRequestList } from '@/components/venue/ShareRequestList'
+import { getActiveVenue } from '@/lib/venue-context'
 
 export default async function RequestsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: venue } = await supabase
-    .from('venues')
-    .select('id')
-    .eq('owner_id', user.id)
-    .single()
+  const venue = await getActiveVenue(supabase, user.id, 'id')
 
   if (!venue) redirect('/venue/dashboard')
 

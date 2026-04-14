@@ -2,17 +2,14 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { VenueSettingsForm } from '@/components/venue/VenueSettingsForm'
 import { TeamSection } from '@/components/venue/TeamSection'
+import { getActiveVenue } from '@/lib/venue-context'
 
 export default async function VenueSettingsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: venue } = await supabase
-    .from('venues')
-    .select('*')
-    .eq('owner_id', user.id)
-    .single()
+  const venue = await getActiveVenue(supabase, user.id, '*')
 
   if (!venue) redirect('/venue/dashboard')
 

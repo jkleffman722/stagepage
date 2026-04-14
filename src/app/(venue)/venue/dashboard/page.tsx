@@ -7,17 +7,14 @@ import { Badge } from '@/components/ui/badge'
 import { VenueOnboardingForm } from '@/components/venue/VenueOnboardingForm'
 import { PACKET_SECTIONS } from '@/lib/types'
 import { AlertTriangle } from 'lucide-react'
+import { getActiveVenue } from '@/lib/venue-context'
 
 export default async function VenueDashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: venue } = await supabase
-    .from('venues')
-    .select('*')
-    .eq('owner_id', user.id)
-    .single()
+  const venue = await getActiveVenue(supabase, user.id, '*')
 
   const { data: packet } = venue
     ? await supabase

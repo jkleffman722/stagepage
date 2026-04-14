@@ -2,17 +2,14 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { CalendarView, type CalendarEvent } from '@/components/shared/CalendarView'
 import { Badge } from '@/components/ui/badge'
+import { getActiveVenue } from '@/lib/venue-context'
 
 export default async function VenueCalendarPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: venue } = await supabase
-    .from('venues')
-    .select('id, name')
-    .eq('owner_id', user.id)
-    .single()
+  const venue = await getActiveVenue(supabase, user.id, 'id, name')
 
   if (!venue) redirect('/venue/dashboard')
 

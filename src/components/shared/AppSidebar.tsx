@@ -4,12 +4,18 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
-import { ChevronLeft, ChevronRight, LogOut, type LucideIcon } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, LogOut, type LucideIcon } from 'lucide-react'
+import { switchVenue } from '@/app/actions/venue-actions'
 
 export interface NavItem {
   href: string
   label: string
   icon: LucideIcon
+}
+
+interface VenueOption {
+  id: string
+  name: string
 }
 
 interface Props {
@@ -20,6 +26,8 @@ interface Props {
   userName?: string
   entityName?: string
   homeHref: string
+  venues?: VenueOption[]
+  activeVenueId?: string
 }
 
 export function AppSidebar({
@@ -30,6 +38,8 @@ export function AppSidebar({
   userName,
   entityName,
   homeHref,
+  venues,
+  activeVenueId,
 }: Props) {
   const pathname = usePathname()
   const router = useRouter()
@@ -77,10 +87,30 @@ export function AppSidebar({
         </button>
       </div>
 
-      {/* Entity name */}
+      {/* Entity name / venue switcher */}
       {!collapsed && entityName && (
         <div className="px-3 pt-3 pb-2">
-          <p className="text-xs font-medium text-zinc-500 truncate">{entityName}</p>
+          {venues && venues.length > 1 ? (
+            <div className="relative flex items-center gap-1">
+              <select
+                value={activeVenueId}
+                onChange={async e => {
+                  await switchVenue(e.target.value)
+                  router.refresh()
+                }}
+                className="w-full appearance-none text-xs font-medium text-zinc-400 bg-transparent border-none outline-none cursor-pointer truncate pr-4"
+              >
+                {venues.map(v => (
+                  <option key={v.id} value={v.id} className="bg-zinc-900 text-zinc-300">
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="h-3 w-3 text-zinc-600 shrink-0 pointer-events-none absolute right-0" />
+            </div>
+          ) : (
+            <p className="text-xs font-medium text-zinc-500 truncate">{entityName}</p>
+          )}
         </div>
       )}
 

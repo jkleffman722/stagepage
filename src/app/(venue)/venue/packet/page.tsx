@@ -8,17 +8,14 @@ import type { PacketSection } from '@/lib/types'
 import { getPacketCompletion } from '@/lib/packet-utils'
 import Link from 'next/link'
 import { AlertTriangle, FileText, MessageSquare } from 'lucide-react'
+import { getActiveVenue } from '@/lib/venue-context'
 
 export default async function PacketPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: venue } = await supabase
-    .from('venues')
-    .select('id, name')
-    .eq('owner_id', user.id)
-    .single()
+  const venue = await getActiveVenue(supabase, user.id, 'id, name')
 
   if (!venue) redirect('/venue/dashboard')
 

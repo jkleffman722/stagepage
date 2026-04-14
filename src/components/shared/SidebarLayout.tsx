@@ -37,14 +37,21 @@ const ARTIST_BOTTOM: NavItem[] = [
   { href: '/artist/settings', label: 'Settings', icon: Settings },
 ]
 
+interface VenueOption {
+  id: string
+  name: string
+}
+
 interface Props {
   role: 'venue' | 'artist'
   userName?: string
   entityName?: string
+  venues?: VenueOption[]
+  activeVenueId?: string
   children: React.ReactNode
 }
 
-export function SidebarLayout({ role, userName, entityName, children }: Props) {
+export function SidebarLayout({ role, userName, entityName, venues, activeVenueId, children }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
 
@@ -74,6 +81,8 @@ export function SidebarLayout({ role, userName, entityName, children }: Props) {
         userName={userName}
         entityName={entityName}
         homeHref={homeHref}
+        venues={venues}
+        activeVenueId={activeVenueId}
       />
       <main
         className={cn(
