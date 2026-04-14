@@ -8,6 +8,8 @@ export interface MissingRequiredField {
   fieldLabel: string
   /** "section_key.field_key" — used as a stable ID for requests */
   path: string
+  /** "section_key-field_key" — safe HTML element id for anchor navigation */
+  fieldId: string
 }
 
 export interface PacketCompletion {
@@ -48,6 +50,7 @@ export function getPacketCompletion(sections: PacketSection[]): PacketCompletion
             fieldKey: field.key,
             fieldLabel: field.label,
             path: `${sectionDef.key}.${field.key}`,
+            fieldId: `${sectionDef.key}-${field.key}`,
           })
         }
       }

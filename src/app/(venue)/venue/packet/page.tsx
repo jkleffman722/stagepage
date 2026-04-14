@@ -134,7 +134,7 @@ export default async function PacketPage() {
               {completion.missingRequired.map(f => (
                 <a
                   key={f.path}
-                  href={`#${f.sectionKey}`}
+                  href={`#${f.fieldId}`}
                   className="inline-block text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded px-1.5 py-0.5 hover:bg-orange-100 hover:border-orange-300 transition-colors"
                 >
                   {f.sectionLabel}: {f.fieldLabel}

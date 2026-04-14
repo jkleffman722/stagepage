@@ -28,12 +28,19 @@ export function PacketSectionEditor({ packetId, sectionDef, existingSection, sor
   const [editing, setEditing] = useState(!existingSection)
   const [saving, setSaving] = useState(false)
   const [editedKeys, setEditedKeys] = useState<Set<string>>(new Set())
+  const [highlightedField, setHighlightedField] = useState<string | null>(null)
 
-  // Auto-open and enter edit mode when this section is the URL hash target
+  // Auto-open and enter edit mode when this section or a specific field is the URL hash target
   useEffect(() => {
-    if (window.location.hash === `#${sectionDef.key}`) {
+    const hash = window.location.hash.slice(1)
+    if (hash === sectionDef.key) {
       setIsOpen(true)
       setEditing(true)
+    } else if (hash.startsWith(`${sectionDef.key}-`)) {
+      const fieldKey = hash.slice(sectionDef.key.length + 1)
+      setIsOpen(true)
+      setEditing(true)
+      setHighlightedField(fieldKey)
     }
   }, [sectionDef.key])
 
@@ -183,8 +190,16 @@ export function PacketSectionEditor({ packetId, sectionDef, existingSection, sor
 
             const isRequiredEmpty = field.required && isEmpty
             const isLowConf = source?.confidence === 'low'
+            const isHighlighted = highlightedField === field.key
             return (
-              <div key={field.key} className="space-y-1.5">
+              <div
+                key={field.key}
+                id={`${sectionDef.key}-${field.key}`}
+                className={cn(
+                  'space-y-1.5 scroll-mt-6 rounded-md transition-all',
+                  isHighlighted && 'ring-2 ring-orange-400 ring-offset-2 bg-orange-50/60 p-2 -mx-2'
+                )}
+              >
                 <div className="flex items-center justify-between gap-2">
                   <Label
                     htmlFor={field.key}
