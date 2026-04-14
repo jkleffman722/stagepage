@@ -32,16 +32,22 @@ export function PacketSectionEditor({ packetId, sectionDef, existingSection, sor
 
   // Auto-open and enter edit mode when this section or a specific field is the URL hash target
   useEffect(() => {
-    const hash = window.location.hash.slice(1)
-    if (hash === sectionDef.key) {
-      setIsOpen(true)
-      setEditing(true)
-    } else if (hash.startsWith(`${sectionDef.key}-`)) {
-      const fieldKey = hash.slice(sectionDef.key.length + 1)
-      setIsOpen(true)
-      setEditing(true)
-      setHighlightedField(fieldKey)
+    function handleHash() {
+      const hash = window.location.hash.slice(1)
+      if (hash === sectionDef.key) {
+        setIsOpen(true)
+        setEditing(true)
+        setHighlightedField(null)
+      } else if (hash.startsWith(`${sectionDef.key}-`)) {
+        const fieldKey = hash.slice(sectionDef.key.length + 1)
+        setIsOpen(true)
+        setEditing(true)
+        setHighlightedField(fieldKey)
+      }
     }
+    handleHash()
+    window.addEventListener('hashchange', handleHash)
+    return () => window.removeEventListener('hashchange', handleHash)
   }, [sectionDef.key])
 
   const initialValues: Record<string, string> = {}
