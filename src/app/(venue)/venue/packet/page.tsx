@@ -132,9 +132,13 @@ export default async function PacketPage() {
           {completion.missingRequired.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {completion.missingRequired.map(f => (
-                <span key={f.path} className="inline-block text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded px-1.5 py-0.5">
+                <a
+                  key={f.path}
+                  href={`#${f.sectionKey}`}
+                  className="inline-block text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded px-1.5 py-0.5 hover:bg-orange-100 hover:border-orange-300 transition-colors"
+                >
                   {f.sectionLabel}: {f.fieldLabel}
-                </span>
+                </a>
               ))}
             </div>
           )}

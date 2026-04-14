@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -28,6 +28,14 @@ export function PacketSectionEditor({ packetId, sectionDef, existingSection, sor
   const [editing, setEditing] = useState(!existingSection)
   const [saving, setSaving] = useState(false)
   const [editedKeys, setEditedKeys] = useState<Set<string>>(new Set())
+
+  // Auto-open and enter edit mode when this section is the URL hash target
+  useEffect(() => {
+    if (window.location.hash === `#${sectionDef.key}`) {
+      setIsOpen(true)
+      setEditing(true)
+    }
+  }, [sectionDef.key])
 
   const initialValues: Record<string, string> = {}
   sectionDef.fields.forEach(f => {
@@ -116,7 +124,8 @@ export function PacketSectionEditor({ packetId, sectionDef, existingSection, sor
   }
 
   return (
-    <Card className={cn(
+    <Card id={sectionDef.key} className={cn(
+      'scroll-mt-6',
       !hasData && 'border-red-100 bg-red-50/30',
       hasData && missingRequiredCount > 0 && 'border-orange-200',
     )}>
