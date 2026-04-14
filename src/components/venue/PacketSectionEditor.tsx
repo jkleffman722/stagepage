@@ -43,6 +43,10 @@ export function PacketSectionEditor({ packetId, sectionDef, existingSection, sor
         setIsOpen(true)
         setEditing(true)
         setHighlightedField(fieldKey)
+        // Scroll after React renders the now-open section
+        setTimeout(() => {
+          document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 50)
       }
     }
     handleHash()
