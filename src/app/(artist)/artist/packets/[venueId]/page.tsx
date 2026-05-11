@@ -12,15 +12,17 @@ export default async function PacketViewPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  // Verify this artist has approved access
+  // Verify this artist has an approved request for this venue
   const { data: request } = await supabase
     .from('share_requests')
-    .select('status')
+    .select('id')
     .eq('venue_id', venueId)
     .eq('requester_profile_id', user.id)
-    .single()
+    .eq('status', 'approved')
+    .limit(1)
+    .maybeSingle()
 
-  if (!request || request.status !== 'approved') notFound()
+  if (!request) notFound()
 
   const { data: venue } = await supabase
     .from('venues')

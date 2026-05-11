@@ -51,12 +51,6 @@ export function ShowCard({ show }: Props) {
     setDeleting(true)
     const supabase = createClient()
 
-    // Nullify show_id on any linked requests first (avoid FK constraint)
-    await supabase
-      .from('share_requests')
-      .update({ show_id: null })
-      .eq('show_id', show.id)
-
     const { error } = await supabase.from('shows').delete().eq('id', show.id)
 
     if (error) {
@@ -118,20 +112,10 @@ export function ShowCard({ show }: Props) {
               Find &amp; Request Venue
             </Button>
           )}
-          {hasVenue && status !== 'approved' && (
-            <Link href={`/artist/tours/${show.tour_id}/shows/${show.id}`}>
-              <Button size="sm" variant="outline">View Show</Button>
+          {hasVenue && (
+            <Link href={`/artist/routing/${show.tour_id}/shows/${show.id}/advance`}>
+              <Button size="sm">Open Advance</Button>
             </Link>
-          )}
-          {status === 'approved' && show.venues && (
-            <>
-              <Link href={`/artist/tours/${show.tour_id}/shows/${show.id}`}>
-                <Button size="sm" variant="outline">Advance Check</Button>
-              </Link>
-              <Link href={`/artist/tours/${show.tour_id}/shows/${show.id}/advance`}>
-                <Button size="sm">Advance Sheet</Button>
-              </Link>
-            </>
           )}
 
           {/* Secondary actions */}

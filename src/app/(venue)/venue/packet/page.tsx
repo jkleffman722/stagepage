@@ -9,6 +9,7 @@ import { getPacketCompletion } from '@/lib/packet-utils'
 import Link from 'next/link'
 import { AlertTriangle, FileText, MessageSquare } from 'lucide-react'
 import { getActiveVenue } from '@/lib/venue-context'
+import { MarkRequestAddressed } from '@/components/venue/MarkRequestAddressed'
 
 export default async function PacketPage() {
   const supabase = await createClient()
@@ -47,6 +48,19 @@ export default async function PacketPage() {
     .eq('status', 'pending')
     .order('created_at', { ascending: false })
 
+  // Build map of section → requested field keys (for highlighting in editors)
+  const requestedFieldsBySection = new Map<string, Set<string>>()
+  for (const req of pendingRequests ?? []) {
+    const paths: string[] = Array.isArray(req.requested_fields) ? req.requested_fields : []
+    for (const path of paths) {
+      const [sKey, fKey] = path.split('.')
+      if (sKey && fKey) {
+        if (!requestedFieldsBySection.has(sKey)) requestedFieldsBySection.set(sKey, new Set())
+        requestedFieldsBySection.get(sKey)!.add(fKey)
+      }
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -79,23 +93,32 @@ export default async function PacketPage() {
           </div>
           {pendingRequests.map(req => {
             const requestedPaths: string[] = Array.isArray(req.requested_fields) ? req.requested_fields : []
-            const fieldLabels = requestedPaths.map(path => {
+            const fields = requestedPaths.map(path => {
               const [sKey, fKey] = path.split('.')
               const sectionDef = PACKET_SECTIONS.find(s => s.key === sKey)
               const fieldDef = sectionDef?.fields.find(f => f.key === fKey)
-              return fieldDef ? `${sectionDef?.label}: ${fieldDef.label}` : path
+              return {
+                label: fieldDef ? `${sectionDef?.label}: ${fieldDef.label}` : path,
+                anchor: sKey && fKey ? `#${sKey}-${fKey}` : null,
+              }
             })
             return (
               <div key={req.id} className="rounded-md bg-white border border-blue-100 px-3 py-2.5 space-y-1.5">
-                <p className="text-xs text-zinc-500">
-                  Requested {new Date(req.created_at).toLocaleDateString()}
-                  {req.message && ` · "${req.message}"`}
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-zinc-500">
+                    Requested {new Date(req.created_at).toLocaleDateString()}
+                    {req.message && ` · "${req.message}"`}
+                  </p>
+                  <MarkRequestAddressed requestId={req.id} />
+                </div>
                 <ul className="space-y-0.5">
-                  {fieldLabels.map(label => (
-                    <li key={label} className="text-xs font-medium text-blue-700 flex items-center gap-1">
+                  {fields.map(f => (
+                    <li key={f.label} className="text-xs font-medium text-blue-700 flex items-center gap-1">
                       <span className="h-1 w-1 rounded-full bg-blue-400 shrink-0" />
-                      {label}
+                      {f.anchor
+                        ? <a href={f.anchor} className="hover:underline underline-offset-2">{f.label}</a>
+                        : f.label
+                      }
                     </li>
                   ))}
                 </ul>
@@ -178,6 +201,7 @@ export default async function PacketPage() {
               sectionDef={sectionDef}
               existingSection={existing ?? null}
               sortOrder={index}
+              requestedFieldKeys={requestedFieldsBySection.get(sectionDef.key)}
             />
           )
         })}

@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# raw venue data — large PDFs, not source code
+/data/venue-packets/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

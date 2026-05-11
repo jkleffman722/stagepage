@@ -1,6 +1,8 @@
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { RiderSectionEditor } from '@/components/artist/RiderSectionEditor'
+import { RiderImportButton } from '@/components/artist/RiderImportButton'
+import { PrintButton } from '@/components/shared/PrintButton'
 import { TECH_RIDER_SECTIONS } from '@/lib/types'
 import type { TechRiderSection } from '@/lib/types'
 import Link from 'next/link'
@@ -103,17 +105,23 @@ export default async function TechRiderPage({ params }: Props) {
     <div className="space-y-6">
       <div>
         <Link
-          href={`/artist/tours/${tourId}`}
+          href="/artist/routing"
           className="inline-flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-600 mb-4 transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          {tour.tour_name}
+          Routing
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tech Rider</h1>
-          <p className="text-zinc-500 mt-0.5 text-sm">
-            {tour.artist_name} · Last updated {new Date(rider.updated_at).toLocaleDateString()}
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Tech Rider</h1>
+            <p className="text-zinc-500 mt-0.5 text-sm">
+              {tour.artist_name} · Last updated {new Date(rider.updated_at).toLocaleDateString()}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <PrintButton href={`/artist/routing/${tourId}/rider/print`} />
+            <RiderImportButton riderId={rider.id} />
+          </div>
         </div>
       </div>
 

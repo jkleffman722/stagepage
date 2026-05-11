@@ -20,9 +20,10 @@ interface Props {
   sectionDef: SectionDefinition
   existingSection: PacketSection | null
   sortOrder: number
+  requestedFieldKeys?: Set<string>
 }
 
-export function PacketSectionEditor({ packetId, sectionDef, existingSection, sortOrder }: Props) {
+export function PacketSectionEditor({ packetId, sectionDef, existingSection, sortOrder, requestedFieldKeys }: Props) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [editing, setEditing] = useState(!existingSection)
@@ -201,13 +202,15 @@ export function PacketSectionEditor({ packetId, sectionDef, existingSection, sor
             const isRequiredEmpty = field.required && isEmpty
             const isLowConf = source?.confidence === 'low'
             const isHighlighted = highlightedField === field.key
+            const isRequested = requestedFieldKeys?.has(field.key) && isEmpty
             return (
               <div
                 key={field.key}
                 id={`${sectionDef.key}-${field.key}`}
                 className={cn(
                   'space-y-1.5 scroll-mt-6 rounded-md transition-all',
-                  isHighlighted && 'ring-2 ring-orange-400 ring-offset-2 bg-orange-50/60 p-2 -mx-2'
+                  isHighlighted && 'ring-2 ring-orange-400 ring-offset-2 bg-orange-50/60 p-2 -mx-2',
+                  isRequested && !isHighlighted && 'ring-1 ring-blue-300 ring-offset-1 bg-blue-50/40 p-2 -mx-2',
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -224,6 +227,11 @@ export function PacketSectionEditor({ packetId, sectionDef, existingSection, sor
                     )}
                   </Label>
                   <div className="flex items-center gap-1 shrink-0">
+                    {isRequested && (
+                      <span className="inline-flex items-center text-[10px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded px-1 py-px">
+                        Requested
+                      </span>
+                    )}
                     {isLowConf && !editing && (
                       <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-200 rounded px-1 py-px">
                         <AlertTriangle className="h-2.5 w-2.5" />

@@ -204,6 +204,16 @@ CREATE POLICY "venues_public_read" ON venues
 CREATE POLICY "packets_public_read" ON technical_packets
   FOR SELECT USING (is_published = true AND auth.uid() IS NOT NULL);
 
+-- Technical packets: approved share request holders can read
+CREATE POLICY "packets_approved_requester" ON technical_packets
+  FOR SELECT USING (
+    venue_id IN (
+      SELECT venue_id FROM share_requests
+      WHERE status = 'approved'
+        AND requester_profile_id = auth.uid()
+    )
+  );
+
 -- Packet sections: any authenticated user can read sections of published packets
 CREATE POLICY "sections_public_read" ON packet_sections
   FOR SELECT USING (

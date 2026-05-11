@@ -153,12 +153,17 @@ export interface TechRider {
   updated_at: string
 }
 
+export type RiderFieldSource =
+  | { type: 'imported'; confidence: 'low' | 'medium'; importedAt: string }
+  | { type: 'manual'; enteredAt: string }
+
 export interface TechRiderSection {
   id: string
   rider_id: string
   section_key: RiderSectionKey
   section_label: string
   fields: Record<string, string | number | boolean | null>
+  field_sources: Record<string, RiderFieldSource>
   sort_order: number
   updated_at: string
 }
@@ -167,10 +172,28 @@ export interface TechRiderSection {
 // Input List
 // ============================================================
 
+export type ConfirmationMethod = 'phone' | 'email' | 'in-person' | 'text' | 'other'
+
+export interface FieldConfirmation {
+  confirmedAt: string       // ISO timestamp
+  confirmedBy: string       // display name of the PM who confirmed
+  method: ConfirmationMethod
+  note?: string             // optional e.g. "spoke with Mark Campbell"
+}
+
+export interface ShowNote {
+  id: string
+  body: string
+  created_at: string
+  created_by_name: string
+}
+
 export interface ShowAdvance {
   id: string
   show_id: string
   fields: Record<string, string | null>
+  field_confirmations: Record<string, FieldConfirmation>
+  show_notes: ShowNote[]
   created_at: string
   updated_at: string
 }
@@ -236,6 +259,8 @@ export const TECH_RIDER_SECTIONS: RiderSectionDefinition[] = [
       { key: 'tour_manager', label: 'Tour Manager', type: 'text', placeholder: 'Name · phone · email' },
       { key: 'production_manager', label: 'Production Manager', type: 'text', placeholder: 'Name · phone · email' },
       { key: 'production_assistant', label: 'Production Assistant', type: 'text', placeholder: 'Name · phone · email' },
+      { key: 'foh_engineer', label: 'FOH Engineer', type: 'text', placeholder: 'Name · phone · email' },
+      { key: 'head_rigger', label: 'Head Rigger', type: 'text', placeholder: 'Name · phone · email' },
       { key: 'merch', label: 'Tour Merch', type: 'text', placeholder: 'Name · phone · email' },
       { key: 'lead_driver', label: 'Lead Driver', type: 'text', placeholder: 'Name · phone' },
       { key: 'bus_count', label: 'Number of Buses', type: 'text', placeholder: 'e.g. 3 Buses' },

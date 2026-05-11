@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { RiderSectionDefinition, TechRiderSection, FieldDefinition } from '@/lib/types'
 import { toast } from 'sonner'
-import { ChevronDown, ChevronUp, Check, Pencil } from 'lucide-react'
+import { ChevronDown, ChevronUp, Check, Pencil, AlertTriangle, TriangleAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -34,9 +34,12 @@ export function RiderSectionEditor({ riderId, sectionDef, existingSection, sortO
     initialValues[f.key] = existing != null ? String(existing) : ''
   })
   const [values, setValues] = useState(initialValues)
+  // Track which fields the user has manually edited this session (clears import badge on save)
+  const [manuallyEdited, setManuallyEdited] = useState<Set<string>>(new Set())
 
   function setValue(key: string, val: string) {
     setValues(prev => ({ ...prev, [key]: val }))
+    setManuallyEdited(prev => new Set(prev).add(key))
   }
 
   const filledCount = sectionDef.fields.filter(f => {
@@ -59,11 +62,24 @@ export function RiderSectionEditor({ riderId, sectionDef, existingSection, sortO
       else fields[f.key] = val || null
     })
 
+    // Update field_sources for manually edited fields
+    const now = new Date().toISOString()
+    const existingSources: Record<string, unknown> = { ...(existingSection?.field_sources ?? {}) }
+    manuallyEdited.forEach(key => {
+      const hasValue = fields[key] !== null && fields[key] !== undefined
+      if (hasValue) {
+        existingSources[key] = { type: 'manual', enteredAt: now }
+      } else {
+        delete existingSources[key]
+      }
+    })
+
     const payload = {
       rider_id: riderId,
       section_key: sectionDef.key,
       section_label: sectionDef.label,
       fields,
+      field_sources: existingSources,
       sort_order: sortOrder,
       updated_at: new Date().toISOString(),
     }
@@ -130,18 +146,45 @@ export function RiderSectionEditor({ riderId, sectionDef, existingSection, sortO
           {sectionDef.fields.map(field => {
             const val = values[field.key]
             const isEmpty = !val
+            const source = existingSection?.field_sources?.[field.key]
+            const showSource = !editing && !!source && !manuallyEdited.has(field.key)
+            const isLow = showSource && source.type === 'imported' && source.confidence === 'low'
+            const isMedium = showSource && source.type === 'imported' && source.confidence === 'medium'
+            const isManual = showSource && source.type === 'manual'
+            const manualDate = isManual
+              ? new Date(source.enteredAt).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })
+              : null
 
             return (
               <div key={field.key} className="space-y-1.5">
-                <Label
-                  htmlFor={field.key}
-                  className={cn(
-                    'text-sm',
-                    !editing && isEmpty ? 'text-zinc-400' : editing ? '' : 'text-zinc-400'
+                <div className="flex items-center gap-2">
+                  <Label
+                    htmlFor={field.key}
+                    className={cn(
+                      'text-sm',
+                      !editing && isEmpty ? 'text-zinc-400' : editing ? '' : 'text-zinc-400'
+                    )}
+                  >
+                    {field.label}
+                  </Label>
+                  {isLow && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-600 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">
+                      <AlertTriangle className="h-2.5 w-2.5" />
+                      Low confidence — verify
+                    </span>
                   )}
-                >
-                  {field.label}
-                </Label>
+                  {isMedium && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
+                      <TriangleAlert className="h-2.5 w-2.5" />
+                      Review
+                    </span>
+                  )}
+                  {isManual && (
+                    <span className="text-[10px] text-zinc-400">
+                      Manually entered {manualDate}
+                    </span>
+                  )}
+                </div>
                 <FieldInput
                   field={field}
                   value={val}

@@ -41,7 +41,7 @@ export function TourDashboard({ tour, shows, userName }: Props) {
       {/* Back + Tour header */}
       <div>
         <Link
-          href="/artist/tours"
+          href="/artist/routing"
           className="inline-flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-600 mb-4 transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
@@ -57,14 +57,14 @@ export function TourDashboard({ tour, shows, userName }: Props) {
           </div>
           <div className="flex items-center gap-2">
             <Link
-              href={`/artist/tours/${tour.id}/rider`}
+              href={`/artist/routing/${tour.id}/rider`}
               className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-xs hover:bg-zinc-50 transition-colors"
             >
               <FileText className="h-4 w-4" />
               Tech Rider
             </Link>
             <Link
-              href={`/artist/tours/${tour.id}/input-list`}
+              href={`/artist/routing/${tour.id}/input-list`}
               className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-xs hover:bg-zinc-50 transition-colors"
             >
               <List className="h-4 w-4" />

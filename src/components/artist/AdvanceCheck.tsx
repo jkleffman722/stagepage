@@ -16,6 +16,7 @@ interface Props {
   hasVenue: boolean
   tourId: string
   riderId: string | null
+  embedded?: boolean
 }
 
 type CheckStatus = 'review' | 'venue-missing' | 'rider-missing' | 'empty' | 'venue-only'
@@ -52,6 +53,7 @@ export function AdvanceCheck({
   hasVenue,
   tourId,
   riderId,
+  embedded = false,
 }: Props) {
   // Build lookup maps
   const riderMap = new Map(riderSections.map(s => [s.section_key, s.fields]))
@@ -83,6 +85,7 @@ export function AdvanceCheck({
 
   // No venue assigned
   if (!hasVenue) {
+    if (embedded) return null
     return (
       <div className="rounded-xl border-2 border-dashed border-zinc-200 py-12 text-center">
         <ClipboardList className="h-8 w-8 text-zinc-300 mx-auto mb-3" />
@@ -94,6 +97,7 @@ export function AdvanceCheck({
 
   // Venue assigned but no packet yet
   if (!packetReceived) {
+    if (embedded) return null
     return (
       <div className="space-y-4">
         <div className="rounded-xl border-2 border-dashed border-zinc-200 py-12 text-center">
@@ -110,7 +114,7 @@ export function AdvanceCheck({
         {!riderId && (
           <p className="text-sm text-center text-zinc-400">
             Also make sure your{' '}
-            <Link href={`/artist/tours/${tourId}/rider`} className="underline underline-offset-2 hover:text-zinc-600">
+            <Link href={`/artist/routing/${tourId}/rider`} className="underline underline-offset-2 hover:text-zinc-600">
               tech rider
             </Link>{' '}
             is filled in — it&apos;s the other half of the comparison.

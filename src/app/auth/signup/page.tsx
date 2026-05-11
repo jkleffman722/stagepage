@@ -68,7 +68,7 @@ function SignupForm() {
         updated_at: new Date().toISOString(),
       }).eq('id', data.user.id)
 
-      router.push('/artist/tours/new')
+      router.push('/artist/routing/new')
     }
 
     router.refresh()

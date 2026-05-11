@@ -1,6 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { InputListEditor } from '@/components/artist/InputListEditor'
+import { PrintButton } from '@/components/shared/PrintButton'
 import type { InputListChannel } from '@/lib/types'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
@@ -59,11 +60,11 @@ export default async function InputListPage({ params }: Props) {
     <div className="space-y-6">
       <div>
         <Link
-          href={`/artist/tours/${tourId}`}
+          href="/artist/routing"
           className="inline-flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-600 mb-4 transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          {tour.tour_name}
+          Routing
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -72,9 +73,7 @@ export default async function InputListPage({ params }: Props) {
               {tour.artist_name} · Last updated {new Date(list.updated_at).toLocaleDateString()}
             </p>
           </div>
-          <p className="text-sm text-zinc-400 mt-1">
-            {(channels ?? []).length} channels
-          </p>
+          <PrintButton href={`/artist/routing/${tourId}/input-list/print`} />
         </div>
       </div>
 

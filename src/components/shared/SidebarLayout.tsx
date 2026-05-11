@@ -28,14 +28,12 @@ const VENUE_BOTTOM: NavItem[] = [
 ]
 
 const ARTIST_NAV: NavItem[] = [
-  { href: '/artist/tours', label: 'Tours', icon: Ticket },
-  { href: '/artist/packets', label: 'My Packets', icon: FolderOpen },
-  { href: '/artist/calendar', label: 'Calendar', icon: Calendar },
-]
-
-const ARTIST_BOTTOM: NavItem[] = [
+  { href: '/artist/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/artist/routing', label: 'Routing', icon: Ticket },
   { href: '/artist/settings', label: 'Settings', icon: Settings },
 ]
+
+const ARTIST_BOTTOM: NavItem[] = []
 
 interface VenueOption {
   id: string
@@ -69,29 +67,31 @@ export function SidebarLayout({ role, userName, entityName, venues, activeVenueI
 
   const navItems = role === 'venue' ? VENUE_NAV : ARTIST_NAV
   const bottomNavItems = role === 'venue' ? VENUE_BOTTOM : ARTIST_BOTTOM
-  const homeHref = role === 'venue' ? '/venue/dashboard' : '/artist/tours'
+  const homeHref = role === 'venue' ? '/venue/dashboard' : '/artist/dashboard'
 
   return (
     <div className="flex min-h-screen bg-zinc-50">
-      <AppSidebar
-        collapsed={collapsed}
-        onToggle={handleToggle}
-        navItems={navItems}
-        bottomNavItems={bottomNavItems}
-        userName={userName}
-        entityName={entityName}
-        homeHref={homeHref}
-        venues={venues}
-        activeVenueId={activeVenueId}
-      />
+      <div className="print:hidden">
+        <AppSidebar
+          collapsed={collapsed}
+          onToggle={handleToggle}
+          navItems={navItems}
+          bottomNavItems={bottomNavItems}
+          userName={userName}
+          entityName={entityName}
+          homeHref={homeHref}
+          venues={venues}
+          activeVenueId={activeVenueId}
+        />
+      </div>
       <main
         className={cn(
-          'flex-1 min-w-0 transition-[margin] duration-200 ease-in-out',
+          'flex-1 min-w-0 transition-[margin] duration-200 ease-in-out print:ml-0 print:bg-white',
           !mounted && 'transition-none',
           collapsed ? 'ml-14' : 'ml-[220px]'
         )}
       >
-        <div className="px-8 py-8 max-w-5xl">{children}</div>
+        <div className="px-8 py-8 max-w-5xl print:max-w-none print:p-0">{children}</div>
       </main>
     </div>
   )
